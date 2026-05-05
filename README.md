@@ -2,12 +2,12 @@
 
 Drummer practice metronome — web app built with vanilla JS + Web Audio API.
 
-## Versions
+## Branches
 
-| Version | Description |
+| Branch | Description |
 |---|---|
-| [v0.5](v0/) | Stable production app |
-| [v1.0](v1/) | New architecture — engine refactor |
+| `main` | v0.5 — Stable production app |
+| `v1-engine` | v1.0 — Engine refactor in progress |
 
 ## Architecture (v1.0)
 
@@ -15,17 +15,15 @@ Clean separation of layers — engine has zero DOM references:
 
 ```
 AudioEngine          → Web Audio, no DOM
-MetronomeEngine      → Scheduler, callbacks
-M1Mode / M2Mode / M3Mode → Mode strategies
+MetronomeEngine      → Single scheduler, callbacks
+M1Mode               → Phase shift, silent bars, subdivision
+M2Mode               → Grid pattern, reference beat
+M3Mode               → Play/silent phases, tap accuracy
 SessionEngine        → Steps, rounds, rests
 SceneService         → localStorage persistence
 LatencyService       → Bluetooth delay
-Metronomix           → Entry point
+Metronomix           → Entry point — wires all layers
 ```
-
-## Deploy
-
-Hosted on GitHub Pages. Push to `main` to deploy.
 
 ## Stack
 
@@ -33,3 +31,7 @@ Hosted on GitHub Pages. Push to `main` to deploy.
 - Web Audio API
 - localStorage
 - iOS Safari compatible
+
+## Deploy
+
+Hosted on GitHub Pages — `main` branch is production.
