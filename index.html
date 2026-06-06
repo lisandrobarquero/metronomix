@@ -1,11 +1,10 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<title>Metronomix</title>
-<style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+  <title>Metronomix</title>
+  <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 :root {
   --bg: #ffffff; --bg2: #f5f5f5;
@@ -207,6 +206,13 @@ input[type=range]::-moz-range-thumb { width: 26px; height: 26px; border-radius: 
 .bt-device-name { flex:1; font-size:14px; color:var(--text); }
 .bt-device-ms { font-size:12px; color:var(--text3); }
 .bt-device-row.active .bt-device-name { color:var(--green); font-weight:600; }
+
+  .m2-label { font-size: 11px; color: var(--text3); text-align: right; padding-right: 8px; white-space: nowrap; }
+  .m2-cell { width: 100%; aspect-ratio: 1; border-radius: 4px; border: 1px solid var(--border); background: var(--bg2); cursor: pointer; transition: background 0.1s; min-width: 20px; }
+  .m2-cell.beat-start { border-left: 2px solid var(--text3); }
+  .m2-cell.active { background: var(--accent, #2563eb); border-color: var(--accent, #2563eb); }
+  .m2-cell.playing { outline: 2px solid var(--coral, #f97316); }
+  .m2-cell.active.playing { background: var(--coral, #f97316); border-color: var(--coral, #f97316); }
 </style>
 </head>
 <body>
@@ -218,7 +224,7 @@ input[type=range]::-moz-range-thumb { width: 26px; height: 26px; border-radius: 
     <div class="ver-toggle" id="verToggle">
       <button class="ver-btn active" id="verBtn1">M1</button>
       <button class="ver-btn" id="verBtn2">M2</button>
-      <button class="ver-btn" id="verBtn3">M3</button>
+      
     </div>
     <button class="scenes-header-btn" id="btOpenBtn" title="Bluetooth delay">BT</button>
     <button class="scenes-header-btn" id="scenesOpenBtn">Scenes</button>
@@ -247,9 +253,7 @@ input[type=range]::-moz-range-thumb { width: 26px; height: 26px; border-radius: 
         <div id="m1FixedDurRow">
           <div class="row">
             <span class="lbl">Duration</span>
-            <input type="range" min="1" max="60" value="5" step="1" id="m1FixedDur">
-            <div class="bpm-box-wrap"><input type="number" class="bpm-input" id="m1FixedDurBox" value="5" min="1" max="60"></div>
-            <span style="font-size:12px;color:var(--text3);flex-shrink:0;">min</span>
+            <div class="bpm-box-wrap"><input type="number" class="bpm-input" id="m1DurMins" value="5" min="0" max="99" style="width:44px;"></div><span style="font-size:12px;color:var(--text3);margin:0 4px;">m</span><div class="bpm-box-wrap"><input type="number" class="bpm-input" id="m1DurSecs" value="0" min="0" max="59" style="width:44px;"></div><span style="font-size:12px;color:var(--text3);">s</span>
           </div>
           <div class="row">
             <span class="lbl">Rounds</span>
@@ -302,9 +306,8 @@ input[type=range]::-moz-range-thumb { width: 26px; height: 26px; border-radius: 
           <!-- Time mode: minutes per step -->
           <div class="row" id="m1StepDurRow" style="margin-bottom:0;">
             <span class="lbl">Per step</span>
-            <input type="range" min="1" max="20" value="1" step="1" id="stepDur">
-            <div class="bpm-box-wrap"><input type="number" class="bpm-input" id="stepDurBox" value="1" min="1" max="20"></div>
-            <span style="font-size:12px;color:var(--text3);flex-shrink:0;">min</span>
+            <div class="bpm-box-wrap"><input type="number" class="bpm-input" id="stepDurMins" value="1" min="0" max="99" style="width:44px;"></div><span style="font-size:12px;color:var(--text3);margin:0 4px;">m</span>
+            <div class="bpm-box-wrap"><input type="number" class="bpm-input" id="stepDurSecs" value="0" min="0" max="59" style="width:44px;"></div><span style="font-size:12px;color:var(--text3);">s</span>
           </div>
           <!-- Bars mode: bars per step -->
           <div class="row" id="m1StepBarsRow" style="display:none;margin-bottom:0;">
@@ -318,11 +321,17 @@ input[type=range]::-moz-range-thumb { width: 26px; height: 26px; border-radius: 
             <label class="switch"><input type="checkbox" id="m1RampRestEnabled"><div class="switch-track"></div><div class="switch-thumb"></div></label>
           </div>
           <div id="m1RampRestRow" style="display:none;">
-            <div class="row" style="margin-bottom:8px;">
+            <div class="row" id="m1RampRestDurRow" style="margin-bottom:8px;">
               <span class="lbl">Rest</span>
               <input type="range" min="5" max="300" value="30" step="5" id="m1RampRestDur">
               <div class="bpm-box-wrap"><input type="number" class="bpm-input" id="m1RampRestDurBox" value="30" min="5" max="300"></div>
               <span style="font-size:12px;color:var(--text3);flex-shrink:0;" id="m1RampRestUnit">sec</span>
+            </div>
+            <div class="row" id="m1RampRestBarsRow" style="display:none;margin-bottom:8px;">
+              <span class="lbl">Rest</span>
+              <input type="range" min="1" max="16" value="2" step="1" id="m1RampRestBars">
+              <div class="bpm-box-wrap"><input type="number" class="bpm-input" id="m1RampRestBarsBox" value="2" min="1" max="16"></div>
+              <span style="font-size:12px;color:var(--text3);flex-shrink:0;">bars</span>
             </div>
             <div class="switch-row" style="margin-bottom:0;">
               <span class="switch-lbl" style="font-size:13px;">Click during rest</span>
@@ -494,9 +503,8 @@ input[type=range]::-moz-range-thumb { width: 26px; height: 26px; border-radius: 
         <div id="m2FixedDurRow">
           <div class="row">
             <span class="lbl">Duration</span>
-            <input type="range" min="1" max="60" value="5" step="1" id="m2FixedDur">
-            <div class="bpm-box-wrap"><input type="number" class="bpm-input" id="m2FixedDurBox" value="5" min="1" max="60"></div>
-            <span style="font-size:12px;color:var(--text3);flex-shrink:0;">min</span>
+            <div class="bpm-box-wrap"><input type="number" class="bpm-input" id="m2DurMins" value="5" min="0" max="99" style="width:44px;"></div><span style="font-size:12px;color:var(--text3);margin:0 4px;">m</span>
+            <div class="bpm-box-wrap"><input type="number" class="bpm-input" id="m2DurSecs" value="0" min="0" max="59" style="width:44px;"></div><span style="font-size:12px;color:var(--text3);">s</span>
           </div>
           <div class="row">
             <span class="lbl">Rounds</span>
@@ -540,13 +548,32 @@ input[type=range]::-moz-range-thumb { width: 26px; height: 26px; border-radius: 
             <span class="tap-hint">Set end BPM by tapping</span>
           </div>
           <div class="row"><span class="lbl">BPM step size</span><input type="range" min="1" max="20" value="1" step="1" id="m2StepSize"><div class="bpm-box-wrap"><input type="number" class="bpm-input" id="m2StepSizeBox" value="1" min="1" max="20"></div></div>
-          <div class="row" style="margin-bottom:0"><span class="lbl">Minutes per step</span><input type="range" min="1" max="20" value="1" step="1" id="m2StepDur"><div class="bpm-box-wrap"><input type="number" class="bpm-input" id="m2StepDurBox" value="1" min="1" max="20"></div></div>
+          <div class="row" style="margin-bottom:6px;">
+            <span class="lbl">Per step</span>
+            <div class="pill-group" id="m2RampModePills">
+              <span class="pill sel" data-rmode="time">Time</span>
+              <span class="pill" data-rmode="bars">Bars</span>
+            </div>
+          </div>
+          <div class="row" id="m2StepDurRow" style="margin-bottom:0;">
+            <span class="lbl"></span>
+            <div class="bpm-box-wrap"><input type="number" class="bpm-input" id="m2StepDurMins" value="1" min="0" max="99" style="width:44px;"></div>
+            <span style="font-size:12px;color:var(--text3);margin:0 4px;">m</span>
+            <div class="bpm-box-wrap"><input type="number" class="bpm-input" id="m2StepDurSecs" value="0" min="0" max="59" style="width:44px;"></div>
+            <span style="font-size:12px;color:var(--text3);">s</span>
+          </div>
+          <div class="row" id="m2StepBarsRow" style="display:none;margin-bottom:0;">
+            <span class="lbl"></span>
+            <input type="range" min="1" max="32" value="4" step="1" id="m2StepBars">
+            <div class="bpm-box-wrap"><input type="number" class="bpm-input" id="m2StepBarsBox" value="4" min="1" max="32"></div>
+            <span style="font-size:12px;color:var(--text3);flex-shrink:0;">bars</span>
+          </div>
           <div class="switch-row" style="margin:10px 0 4px;">
             <span class="switch-lbl" style="font-size:13px;">Rest between steps</span>
             <label class="switch"><input type="checkbox" id="m2RampRestEnabled"><div class="switch-track"></div><div class="switch-thumb"></div></label>
           </div>
           <div id="m2RampRestRow" style="display:none;">
-            <div class="row" style="margin-bottom:8px;">
+            <div class="row" id="m2RampRestDurRow" style="margin-bottom:8px;">
               <span class="lbl">Rest</span>
               <input type="range" min="5" max="300" value="30" step="5" id="m2RampRestDur">
               <div class="bpm-box-wrap"><input type="number" class="bpm-input" id="m2RampRestDurBox" value="30" min="5" max="300"></div>
@@ -554,6 +581,12 @@ input[type=range]::-moz-range-thumb { width: 26px; height: 26px; border-radius: 
             </div>
             <div class="switch-row" style="margin-bottom:0;">
               <span class="switch-lbl" style="font-size:13px;">Click during rest</span>
+            <div class="row" id="m2RampRestBarsRow" style="display:none;margin-bottom:8px;">
+              <span class="lbl">Rest</span>
+              <input type="range" min="1" max="16" value="2" step="1" id="m2RampRestBars">
+              <div class="bpm-box-wrap"><input type="number" class="bpm-input" id="m2RampRestBarsBox" value="2" min="1" max="16"></div>
+              <span style="font-size:12px;color:var(--text3);flex-shrink:0;">bars</span>
+            </div>
               <label class="switch"><input type="checkbox" id="m2RampRestClick"><div class="switch-track"></div><div class="switch-thumb"></div></label>
             </div>
           </div>
@@ -666,6 +699,11 @@ input[type=range]::-moz-range-thumb { width: 26px; height: 26px; border-radius: 
     </div>
     <!-- Session M2 -->
     <div id="m2Session" style="display:none;">
+      <div id="m2CountInDisplay" style="display:none;text-align:center;padding:40px 0;">
+        <div style="font-size:14px;color:var(--text3);margin-bottom:8px;">Count in</div>
+        <div id="m2CountInBeat" style="font-size:72px;font-weight:700;color:var(--text1);line-height:1;">1</div>
+      </div>
+      <div id="m2SessionMain">
       <div class="session-bpm" id="m2LiveBpm">80</div>
       <div class="session-bpm-lbl">BPM</div>
       <div class="session-time" id="m2LiveTime">—</div>
@@ -689,63 +727,13 @@ input[type=range]::-moz-range-thumb { width: 26px; height: 26px; border-radius: 
       </div>
     </div>
   </div>
-  <!-- M3: Metronome Game -->
-  <div id="m3" style="display:none;">
-    <div id="m3Setup">
-      <div class="card">
-        <div class="card-title">METRONOME GAME</div>
-        <div class="sublbl">BPM</div>
-        <div class="row">
-          <input type="range" min="40" max="240" value="80" step="1" id="m3Bpm">
-          <div class="bpm-box-wrap"><input type="number" class="bpm-input" id="m3BpmBox" value="80" min="1"></div>
-        </div>
-        <div class="sublbl">Time signature</div>
-        <div class="pill-group" id="m3TimeSigPills">
-          <span class="pill" data-ts="2">2/4</span>
-          <span class="pill" data-ts="3">3/4</span>
-          <span class="pill sel" data-ts="4">4/4</span>
-          <span class="pill" data-ts="5">5/4</span>
-          <span class="pill" data-ts="6">6/4</span>
-          <span class="pill" data-ts="7">7/4</span>
-        </div>
-        <div class="divider"></div>
-        <div class="card-title">GAME SETTINGS</div>
-        <div class="row">
-          <span class="lbl">Play bars</span>
-          <input type="range" min="1" max="8" value="4" step="1" id="m3PlayBars">
-          <div class="bpm-box-wrap"><input type="number" class="bpm-input" id="m3PlayBarsBox" value="4" min="1" max="8"></div>
-        </div>
-        <div class="row" style="margin-bottom:12px;">
-          <span class="lbl">Silent bars</span>
-          <input type="range" min="1" max="8" value="2" step="1" id="m3SilentBars">
-          <div class="bpm-box-wrap"><input type="number" class="bpm-input" id="m3SilentBarsBox" value="2" min="1" max="8"></div>
-        </div>
-
-      </div>
-      <div class="btn-row"><button class="btn wide" id="m3SaveSceneBtn">💾 Save Scene</button><button class="btn primary wide" id="m3StartBtn">Start game</button></div>
-    </div>
-    <div id="m3Session" style="display:none;">
-      <div class="card" style="text-align:center;">
-        <div class="session-bpm" id="m3LiveBpm">80</div>
-        <div class="session-bpm-lbl" id="m3StatusLbl">BPM</div>
-        <div id="m3BeatDots" class="beat-dots" style="margin:16px 0;"></div>
-        <div id="m3Instruction" style="font-size:13px;color:var(--text3);margin-bottom:20px;min-height:18px;">Listen and feel the groove</div>
-        <button class="btn primary wide" id="m3TapCheckBtn" style="font-size:18px;padding:18px;opacity:0.3;pointer-events:none;" disabled>TAP BEAT 1</button>
-        <div id="m3TapResult" style="margin-top:12px;font-size:15px;min-height:24px;color:var(--text2);"></div>
-      </div>
-      <div class="btn-row" style="margin-top:8px;">
-        <button class="btn wide" id="m3StopBtn">Stop</button>
-      </div>
-    </div>
-  </div>
 </div>
-
-<!-- Scenes Modal -->
 <div id="scenesModal" class="scenes-modal-bg" style="display:none;">
   <div class="scenes-modal">
     <div class="scenes-modal-header">
       <span class="scenes-modal-title">Scenes</span>
       <div style="display:flex;gap:8px;align-items:center;">
+        <button class="btn sm" id="scenesExportAllBtn">Export all</button>
         <button class="btn sm" id="scenesImportBtn">Import</button>
         <button class="scenes-close-btn" id="scenesCloseBtn">✕</button>
       </div>
@@ -753,7 +741,7 @@ input[type=range]::-moz-range-thumb { width: 26px; height: 26px; border-radius: 
     <div class="scenes-tabs">
       <button class="scenes-tab active" data-stab="1">M1</button>
       <button class="scenes-tab" data-stab="2">M2</button>
-      <button class="scenes-tab" data-stab="3">M3</button>
+      
     </div>
     <div id="scenesListWrap" class="scenes-list-wrap">
       <div id="scenesEmpty" class="scenes-empty">No scenes saved yet</div>
@@ -793,6 +781,16 @@ input[type=range]::-moz-range-thumb { width: 26px; height: 26px; border-radius: 
     </div>
     <div style="padding:16px;overflow-y:auto;">
       <p style="font-size:13px;color:var(--text3);margin:0 0 16px;">If your Bluetooth device makes the audio arrive late compared to the visuals, increase this delay to sync them up.</p>
+      <!-- Test visual -->
+      <div id="btTestVisual" style="display:none;text-align:center;padding:8px 0 16px;">
+        <div style="display:flex;justify-content:center;gap:10px;margin-bottom:10px;" id="btBeatDots">
+          <div style="width:20px;height:20px;border-radius:50%;background:var(--bg3);transition:background 0.05s;" class="bt-dot"></div>
+          <div style="width:20px;height:20px;border-radius:50%;background:var(--bg3);transition:background 0.05s;" class="bt-dot"></div>
+          <div style="width:20px;height:20px;border-radius:50%;background:var(--bg3);transition:background 0.05s;" class="bt-dot"></div>
+          <div style="width:20px;height:20px;border-radius:50%;background:var(--bg3);transition:background 0.05s;" class="bt-dot"></div>
+        </div>
+        <div style="font-size:11px;color:var(--text3);">Adjust delay until visual matches what you hear</div>
+      </div>
       <div class="sublbl">Current delay</div>
       <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;">
         <input type="range" min="0" max="500" step="5" value="0" id="btDelaySlider" style="flex:1;">
@@ -801,21 +799,25 @@ input[type=range]::-moz-range-thumb { width: 26px; height: 26px; border-radius: 
       </div>
       <div class="sublbl">Saved devices</div>
       <div id="btDevicesList" style="margin-bottom:16px;"></div>
+      <button class="btn wide" id="btTestBtn" style="margin-bottom:12px;">▶ Test</button>
       <div style="display:flex;gap:8px;">
         <input type="text" id="btDeviceName" placeholder="Device name..." style="flex:1;padding:10px 12px;background:var(--bg2);border:0.5px solid var(--border2);border-radius:var(--radius);color:var(--text);font-size:14px;outline:none;">
         <button class="btn primary" id="btSaveDevice" style="white-space:nowrap;">Save</button>
       </div>
     </div>
   </div>
-</div>
 
+
+
+</body>
 <script>
+
 // ============================================================
 // METRONOMIX v1.1 — Phase 1: AudioEngine
 // Engine layer: zero DOM references, portable to any platform
 // ============================================================
 
-if (navigator.audioSession) navigator.audioSession.type = 'playback';
+try { try { try { try { try { try { try { try { try { try { try { try { try { try { try { try { try { if (navigator.audioSession) navigator.audioSession.type = 'playback'; } catch(e) { /* not supported */ } } catch(e) {} } catch(e) {} } catch(e) {} } catch(e) {} } catch(e) {} } catch(e) {} } catch(e) {} } catch(e) {} } catch(e) {} } catch(e) {} } catch(e) {} } catch(e) {} } catch(e) {} } catch(e) {} } catch(e) {} } catch(e) {}
 
 // ── Wake Lock ────────────────────────────────────────────────
 let _wakeLock = null;
@@ -840,7 +842,7 @@ const TONE_PRESETS = [
   [400,  280,  200,  0.06, 'triangle'], // Deep
 ];
 const COUNT_IN_PRESET = [880, 660, 440, 0.07, 'sine'];
-const TONE_FREQS = [1600, 1000, 300]; // M2 grid: high, mid, low
+const TONE_FREQS = [1600, 800, 400, 200, 100]; // hi-hat, snare, mid-tom, floor-tom, kick // M2 grid: high, mid, low
 
 // ── AudioEngine ──────────────────────────────────────────────
 // Portable: no DOM, no global state. One instance per app.
@@ -857,6 +859,9 @@ class AudioEngine {
     if (!this._ctx) {
       this._ctx = new this._AC({ latencyHint: 'interactive', sampleRate: 44100 });
       this._master = this._ctx.createGain();
+      this._killGain = this._ctx.createGain(); // instant kill switch for all oscillators
+      this._killGain.gain.value = 1;
+      this._killGain.connect(this._master);
       this._master.gain.value = 1;
       this._master.connect(this._ctx.destination);
       // iOS keep-alive: silent looping buffer
@@ -909,7 +914,7 @@ class AudioEngine {
     const o = ctx.createOscillator();
     const g = ctx.createGain();
     o.type = wave; o.frequency.value = freq;
-    o.connect(g); g.connect(this._master || ctx.destination);
+    o.connect(g); g.connect(this._killGain || this._master || ctx.destination);
     g.gain.setValueAtTime(vol, time);
     g.gain.exponentialRampToValueAtTime(0.0001, time + decay + 0.01);
     o.start(time); o.stop(time + decay + 0.02);
@@ -944,115 +949,7 @@ const VisualTimer = {
 // ============================================================
 // PHASE 1 TEST HARNESS
 // ============================================================
-async function runPhase1Tests() {
-  const out = document.getElementById('v1TestOutput');
-  const log = (msg, ok) => {
-    const line = document.createElement('div');
-    line.textContent = (ok ? '✅ ' : '❌ ') + msg;
-    line.style.color = ok ? '#4ade80' : '#f87171';
-    out.appendChild(line);
-  };
 
-  // T1: AudioEngine instantiates
-  log('AudioEngine instantiated', audio instanceof AudioEngine);
-
-  // T2: getCtx returns AudioContext
-  const ctx = audio.getCtx();
-  log('getCtx() returns AudioContext', ctx instanceof AudioContext);
-
-  // T3: currentTime is a number
-  log('currentTime is numeric', typeof audio.currentTime === 'number');
-
-  // T4: playClick doesn't throw
-  let ok = true;
-  try { audio.playClick(audio.currentTime + 0.05, 'accent', TONE_PRESETS[0]); }
-  catch(e) { ok = false; }
-  log('playClick() schedules without error', ok);
-
-  // T5: playTone doesn't throw
-  ok = true;
-  try { audio.playTone(audio.currentTime + 0.05, 1000); }
-  catch(e) { ok = false; }
-  log('playTone() schedules without error', ok);
-
-  // T6: mute sets gain to 0
-  audio.mute();
-  log('mute() executes without error', audio._master !== null);
-
-  // T7: unmute restores gain
-  audio.unmute();
-  log('unmute() executes without error', audio._master !== null);
-
-  // T8: VisualTimer.delay returns number >= btDelay
-  const d = VisualTimer.delay(audio.currentTime + 1);
-  log('VisualTimer.delay() returns number', typeof d === 'number' && d >= 0);
-
-  // T9: VisualTimer tracks and cancels
-  const id = VisualTimer.set(() => {}, 10000);
-  const tracked = _vtIds.includes(id);
-  VisualTimer.cancelAll();
-  log('VisualTimer tracks and cancels timeouts', tracked && _vtIds.length === 0);
-
-  // T10: chime doesn't throw
-  ok = true;
-  try { audio.chime([523, 659, 784], 100); }
-  catch(e) { ok = false; }
-  log('chime() fires without error', ok);
-  // Wait for chime to finish before next phase starts
-  await new Promise(r => setTimeout(r, 400));
-}
-
-async function runPhase2Tests() {
-  const out = document.getElementById('v1TestOutput');
-  const log = (msg, ok) => {
-    const line = document.createElement('div');
-    line.textContent = (ok ? '✅ ' : '❌ ') + msg;
-    line.style.color = ok ? '#4ade80' : '#f87171';
-    out.appendChild(line);
-  };
-  const sep = document.createElement('div');
-  sep.textContent = '── Phase 2: MetronomeEngine ──';
-  sep.style.color = '#888'; sep.style.margin = '8px 0 4px';
-  out.appendChild(sep);
-
-  // All sync tests first
-  log('MetronomeEngine instantiated', metro instanceof MetronomeEngine);
-
-  metro.start({ bpm: 80, beatsPerBar: 4 });
-  log('start() sets running=true', metro.running === true);
-  log('onBeat callback is a function', typeof metro.onBeat === 'function' || metro.onBeat === null);
-
-  metro.stop(true);
-  log('stop() sets running=false', metro.running === false);
-
-  const genBefore = metro._gen;
-  metro.stop(true);
-  log('stop() increments _gen', metro._gen > genBefore);
-
-  metro.start({ bpm: 120, beatsPerBar: 4 });
-  metro.pause();
-  log('pause() stops metro', metro.running === false);
-  metro.resume({ bpm: 120, beatsPerBar: 4 });
-  log('resume() restarts metro', metro.running === true);
-  metro.stop(true);
-
-  metro.start({ bpm: 80, beatsPerBar: 4, subCount: 4 });
-  log('subCount set correctly', metro.subCount === 4);
-  metro.stop(true);
-
-  metro.start({ bpm: 80, beatsPerBar: 4, silentEnabled: true, playBars: 2, silentBars: 1 });
-  log('silentEnabled tracked', metro.silentEnabled === true);
-  metro.stop(true);
-
-  metro.start({ bpm: 80, beatsPerBar: 4, barStepMode: true, barStepSize: 4 });
-  log('barStepMode tracked', metro.barStepMode === true && metro.barStepSize === 4);
-  metro.stop(true);
-
-  // cleanup
-  metro.stop(true);
-  metro.onBeat = null; metro.onVisualBeat = null; metro.onBarEnd = null;
-  audio.unmute();
-}
 
 // ============================================================
 // METRONOMIX v1.2 — Phase 2: MetronomeEngine
@@ -1108,7 +1005,7 @@ class MetronomeEngine {
 
   // ── Public API ──────────────────────────────────────────────
   start(config = {}) {
-    this.stop(true); // keepAudio — never close ctx on start
+    this.stop(true, true); // keepAudio + keepGain — let caller manage gain
     Object.assign(this, {
       bpm:          config.bpm          ?? this.bpm,
       beatsPerBar:  config.beatsPerBar  ?? 4,
@@ -1128,33 +1025,59 @@ class MetronomeEngine {
       _countLeft: config.countIn ? (config.beatsPerBar ?? 4) : 0,
     });
     this._run();
-    this._timer = setInterval(() => this._run(), 1000);
+    this._timer = setInterval(() => this._run(), 50);
   }
 
-  stop(keepAudio = false) {
+  stop(keepAudio = false, keepGain = false) {
     clearInterval(this._timer); this._timer = null;
     this.running = false; this.nextTime = 0;
     this._gen++;
     VisualTimer.cancelAll();
-    keepAudio ? this.audio.mute() : this.audio.close();
+    if (!keepAudio) {
+      this.audio.close();
+    } else if (!keepGain) {
+      const mg = this.audio._master;
+      const ctx = this.audio._ctx;
+      if (mg && ctx) mg.gain.setValueAtTime(0, ctx.currentTime);
+    }
+    document.querySelectorAll('.bdot').forEach(d => d.classList.remove('on'));
   }
 
-  pause()            { this.stop(true); }
-  resume(config = {}) {
-    this.audio.unmute();
-    this.start(config);
+  pause() {
+    const mg = this.audio._master;
+    const ctx = this.audio._ctx;
+    if (mg && ctx) mg.gain.setValueAtTime(0, ctx.currentTime);
+    this.stop(true, true); // keepAudio=true, keepGain=true — gain already set above
   }
+
+  resume(countIn = false) {
+    const mg = this.audio._master;
+    const ctx = this.audio._ctx;
+    if (mg && ctx) mg.gain.setValueAtTime(1, ctx.currentTime);
+    this.start({
+      bpm: this.bpm, beatsPerBar: this.beatsPerBar, subCount: this.subCount,
+      countIn,
+      silentEnabled: this.silentEnabled, silentRandom: this.silentRandom,
+      playBars: this.playBars, silentBars: this.silentBars,
+      barCount: this.barCount, silentBar: this.silentBar,
+      barStepMode: this.barStepMode, barStepSize: this.barStepSize,
+    });
+    if (mg && ctx) mg.gain.setValueAtTime(1, ctx.currentTime);
+  }
+
 
   // ── Scheduler loop ──────────────────────────────────────────
   _run() {
+    if (this._paused) return; // scheduler ticks but does nothing when paused
     const ctx = this.audio.getCtx();
     if (this.nextTime === 0) this.nextTime = ctx.currentTime + 0.05;
-    while (this.nextTime < ctx.currentTime + 2.0) this._tick(ctx);
+    while (this.nextTime < ctx.currentTime + 0.3) this._tick(ctx);
   }
 
   _tick(ctx) {
     const t   = this.nextTime;
-    const spb = 60 / this.bpm;           // seconds per beat
+    const spb = 60 / this.bpm;
+    const isPaused = this._paused;           // seconds per beat
     const sps = spb / this.subCount;     // seconds per subStep
 
     // ── Count-in ──────────────────────────────────────────────
@@ -1168,8 +1091,9 @@ class MetronomeEngine {
       }, VisualTimer.delay(t));
       this._countLeft--;
       if (this._countLeft === 0 && this.onCountInEnd) {
+        // Fire after the last beat finishes sounding (beat duration after last click)
         VisualTimer.set(() => { if (this._gen === gen) this.onCountInEnd(); },
-          VisualTimer.delay(t));
+          VisualTimer.delay(t) + spb * 1000);
       }
       this.nextTime += spb;
       return;
@@ -1179,11 +1103,11 @@ class MetronomeEngine {
     const isDownbeat = this.beat === 0 && this.subStep === 0;
     const isBeatOne  = this.subStep === 0;
 
-    // Audio callback (mode handles what to play)
-    if (this.onBeat) this.onBeat(t, this.beat, isDownbeat, isBeatOne);
+    // Audio callback — skip when paused (scheduler keeps running for position)
+    if (!isPaused && this.onBeat) this.onBeat(t, this.beat, isDownbeat, isBeatOne);
 
-    // Visual callback — protected by generation counter
-    if (this.onVisualBeat) {
+    // Visual callback — skip when paused
+    if (!isPaused && this.onVisualBeat) {
       const snap = {
         beat: this.beat, isDownbeat,
         barStepCount: this.barStepCount,
@@ -1320,76 +1244,6 @@ class M1Mode {
 
 const m1 = new M1Mode(metro);
 
-async function runPhase3Tests() {
-  const out = document.getElementById('v1TestOutput');
-  const log = (msg, ok) => {
-    const d = document.createElement('div');
-    d.textContent = (ok ? '✅ ' : '❌ ') + msg;
-    d.style.color = ok ? '#4ade80' : '#f87171';
-    out.appendChild(d);
-  };
-  const sep = document.createElement('div');
-  sep.textContent = '── Phase 3: M1Mode ──';
-  sep.style.cssText = 'color:#888;margin:8px 0 4px';
-  out.appendChild(sep);
-
-  // T1: instantiation
-  log('M1Mode instantiated', m1 instanceof M1Mode);
-
-  // T2-T5: configure sets engine correctly
-  m1.configure({ subDiv: '4',  tonePreset: 0, phaseOn: false });
-  log('configure binds onBeat', typeof metro.onBeat === 'function');
-  log('4th  → subCount=1', metro.subCount === 1);
-  m1.configure({ subDiv: '8'  }); log('8th  → subCount=2', metro.subCount === 2);
-  m1.configure({ subDiv: 't'  }); log('trip → subCount=3', metro.subCount === 3);
-  m1.configure({ subDiv: '16' }); log('16th → subCount=4', metro.subCount === 4);
-
-  // T6: tone preset stored
-  m1.configure({ tonePreset: 3 });
-  log('tonePreset stored', m1.tonePreset === 3);
-
-  // T7: phase config stored
-  m1.configure({ phaseOn: true, anchorBars: 2, shiftBars: 1 });
-  log('phaseOn stored', m1.phaseOn === true);
-  log('anchorBars stored', m1.anchorBars === 2);
-  log('shiftBars stored', m1.shiftBars === 1);
-
-  // T8: onBarEnd bound
-  log('onBarEnd bound', typeof metro.onBarEnd === 'function');
-
-  // T9: silent bar suppresses click (intercept _osc)
-  let oscCalled = false;
-  m1.configure({ phaseOn: false, subDiv: '4', tonePreset: 0 });
-  const orig = audio._osc.bind(audio);
-  audio._osc = () => { oscCalled = true; };
-  metro.silentBar = true;
-  m1._onBeat(audio.currentTime, 0, true, true);
-  audio._osc = orig;
-  metro.silentBar = false;
-  log('silent bar suppresses click', !oscCalled);
-
-  // T10: onPhaseChange fires after bar end (via VisualTimer.delay at past time)
-  let phaseFired = false;
-  m1.configure({ phaseOn: true, anchorBars: 1, shiftBars: 1, subDiv: '4', tonePreset: 0 });
-  m1.onPhaseChange = () => { phaseFired = true; };
-  m1._onBarEnd(audio.currentTime - 0.001); // past → delay≈0
-  await new Promise(r => setTimeout(r, 20));
-  log('onPhaseChange fires on bar end', phaseFired);
-
-  // T11: onVisualBeat fires during live run (silent — no clicks)
-  let visualFired = false;
-  metro.onBeat = null;        // silence audio during this test
-  metro.onVisualBeat = (snap) => { visualFired = true; };
-  metro.start({ bpm: 240, beatsPerBar: 4 });
-  await new Promise(r => setTimeout(r, 150));
-  log('onVisualBeat fires during run', visualFired);
-
-  // Cleanup
-  metro.stop(true);
-  metro.onBeat = null; metro.onVisualBeat = null; metro.onBarEnd = null;
-  m1.onPhaseChange = null;
-  audio.unmute();
-}
 
 // ============================================================
 // METRONOMIX v1.4 — Phase 4: M2Mode
@@ -1400,7 +1254,7 @@ async function runPhase3Tests() {
 class M2Mode {
   constructor(engine) {
     this.engine        = engine;
-    this.pattern       = [[], [], []]; // 3 rows x N cols
+    this.pattern       = [[], [], [], [], []]; // 5 rows x N cols
     this.subdivPerBeat = 1;
     this.numMeasures   = 1;
     this.timeSig       = 4;
@@ -1436,10 +1290,9 @@ class M2Mode {
     const col = this._gridBeat % this.totalCols;
 
     // Play pattern hits
-    for (let row = 0; row < 3; row++) {
+    for (let row = 0; row < 5; row++) {
       if (this.pattern[row]?.[col]) {
-        // Volume varies by row: high=0.75, mid=0.65, low=0.8
-        const vol = [0.75, 0.65, 0.8][row];
+        const vol = [0.8, 0.7, 0.65, 0.7, 0.75][row];
         this.engine.audio.playTone(time, TONE_FREQS[row], vol);
       }
     }
@@ -1465,83 +1318,6 @@ class M2Mode {
 
 const m2 = new M2Mode(metro);
 
-async function runPhase4Tests() {
-  const out = document.getElementById('v1TestOutput');
-  const log = (msg, ok) => {
-    const d = document.createElement('div');
-    d.textContent = (ok ? '✅ ' : '❌ ') + msg;
-    d.style.color = ok ? '#4ade80' : '#f87171';
-    out.appendChild(d);
-  };
-  const sep = document.createElement('div');
-  sep.textContent = '── Phase 4: M2Mode ──';
-  sep.style.cssText = 'color:#888;margin:8px 0 4px';
-  out.appendChild(sep);
-
-  // T1: instantiation
-  log('M2Mode instantiated', m2 instanceof M2Mode);
-
-  // T2: configure binds onBeat and sets subCount
-  m2.configure({ subdivPerBeat: 2, timeSig: 4, numMeasures: 1 });
-  log('configure binds onBeat', typeof metro.onBeat === 'function');
-  log('subCount = subdivPerBeat', metro.subCount === 2);
-
-  // T3: totalCols calculation
-  m2.configure({ subdivPerBeat: 2, timeSig: 4, numMeasures: 2 });
-  log('totalCols = timeSig × subdiv × measures', m2.totalCols === 16);
-
-  // T4: pattern stored
-  const p = [[1,0,1,0],[0,1,0,1],[0,0,1,0]];
-  m2.configure({ pattern: p, subdivPerBeat: 1, timeSig: 4, numMeasures: 1 });
-  log('pattern stored', m2.pattern === p);
-
-  // T5: onBarEnd is null (M2 doesn't use it)
-  log('onBarEnd is null', metro.onBarEnd === null);
-
-  // T6: _gridBeat resets on configure
-  m2._gridBeat = 5;
-  m2.configure({ subdivPerBeat: 1, timeSig: 4, numMeasures: 1 });
-  log('_gridBeat resets on configure', m2._gridBeat === 0);
-
-  // T7: refBeat stored
-  m2.configure({ refBeat: true, refTonePreset: 2 });
-  log('refBeat stored', m2.refBeat === true);
-  log('refTonePreset stored', m2.refTonePreset === 2);
-
-  // T8: pattern hit fires playTone
-  let toneFired = false;
-  const origOsc = audio._osc.bind(audio);
-  audio._osc = (ctx, time, freq) => { if (freq === TONE_FREQS[0]) toneFired = true; };
-  const testPattern = [[1,0,0,0],[0,0,0,0],[0,0,0,0]];
-  m2.configure({ pattern: testPattern, subdivPerBeat: 1, timeSig: 4, numMeasures: 1, refBeat: false });
-  m2._onBeat(audio.currentTime, 0, true, true); // simulate beat on col 0
-  audio._osc = origOsc;
-  log('pattern hit fires playTone', toneFired);
-
-  // T9: empty col fires no tone
-  let toneFired2 = false;
-  audio._osc = (ctx, time, freq) => { toneFired2 = true; };
-  m2._gridBeat = 1; // col 1 is empty in testPattern
-  m2._onBeat(audio.currentTime, 1, false, true);
-  audio._osc = origOsc;
-  log('empty col fires no tone', !toneFired2);
-
-  // T10: onGridBeat fires during run
-  // Use empty pattern + no refBeat so _onBeat runs silently
-  let gridFired = false;
-  m2.configure({ pattern: [[],[],[]], subdivPerBeat: 1, timeSig: 4, numMeasures: 1, refBeat: false });
-  m2.onGridBeat = () => { gridFired = true; };
-  // Don't null onBeat — m2.configure already bound it, and onGridBeat fires from within
-  metro.start({ bpm: 240, beatsPerBar: 4 });
-  await new Promise(r => setTimeout(r, 150));
-  log('onGridBeat fires during run', gridFired);
-
-  // Cleanup
-  metro.stop(true);
-  metro.onBeat = null; metro.onVisualBeat = null; metro.onBarEnd = null;
-  m2.onGridBeat = null;
-  audio.unmute();
-}
 
 // ============================================================
 // METRONOMIX v1.5 — Phase 5: M3Mode
@@ -1549,164 +1325,9 @@ async function runPhase4Tests() {
 // No DOM references — UI layer handles all display.
 // ============================================================
 
-class M3Mode {
-  constructor(engine) {
-    this.engine     = engine;
-    this.playBars   = 4;
-    this.silentBars = 2;
-    this.phase      = 'play';    // 'play' | 'silent'
-    this._barsDone  = 0;
-    this._beat1Times = [];       // ring buffer of scheduled beat-1 audio times
 
-    // UI callbacks
-    this.onPhaseChange = null;  // (phase: 'play'|'silent') => void
-  }
 
-  configure(opts = {}) {
-    Object.assign(this, {
-      playBars:   opts.playBars   ?? 4,
-      silentBars: opts.silentBars ?? 2,
-      phase:      'play',
-      _barsDone:  0,
-      _beat1Times: [],
-    });
-    this.engine.subCount = 1;
-    this.engine.onBeat   = (t, beat, isDown) => this._onBeat(t, beat, isDown);
-    this.engine.onBarEnd = (t) => this._onBarEnd(t);
-  }
 
-  _onBeat(time, beat, isDownbeat) {
-    if (isDownbeat) {
-      this._beat1Times.push(time);
-      if (this._beat1Times.length > 32) this._beat1Times.shift();
-    }
-    if (this.phase === 'play') {
-      const preset = TONE_PRESETS[0];
-      this.engine.audio.playClick(time, isDownbeat ? 'accent' : 'beat', preset);
-    }
-    // silent phase: no click, but still track beat-1 times for checkTap
-  }
-
-  _onBarEnd(time) {
-    this._barsDone++;
-    const limit = this.phase === 'play' ? this.playBars : this.silentBars;
-    if (this._barsDone < limit) return;
-
-    this._barsDone = 0;
-    this.phase = this.phase === 'play' ? 'silent' : 'play';
-
-    if (this.onPhaseChange) {
-      const phase = this.phase, gen = this.engine._gen;
-      VisualTimer.set(() => {
-        if (this.engine._gen === gen) this.onPhaseChange(phase);
-      }, VisualTimer.delay(time));
-    }
-  }
-
-  // Measure tap accuracy against nearest beat-1
-  checkTap() {
-    const now  = this.engine.audio.currentTime;
-    const spb  = 60 / this.engine.bpm;
-    const spbar = spb * this.engine.beatsPerBar;
-    const past = this._beat1Times.filter(t => t <= now);
-    if (!past.length) return { error: 'too-early' };
-
-    const last    = past[past.length - 1];
-    const offset  = now - last;
-    const toNext  = spbar - offset;
-    const nearest = toNext < offset ? last + spbar : last;
-    const diffMs  = Math.round((now - nearest) * 1000);
-    const abs     = Math.abs(diffMs);
-    const grade   = abs < 25 ? 'perfect' : abs < 60 ? 'great' : abs < 120 ? 'close' : abs < 200 ? 'almost' : 'miss';
-    return { diffMs, grade };
-  }
-}
-
-const m3 = new M3Mode(metro);
-
-async function runPhase5Tests() {
-  const out = document.getElementById('v1TestOutput');
-  const log = (msg, ok) => {
-    const d = document.createElement('div');
-    d.textContent = (ok ? '✅ ' : '❌ ') + msg;
-    d.style.color = ok ? '#4ade80' : '#f87171';
-    out.appendChild(d);
-  };
-  const sep = document.createElement('div');
-  sep.textContent = '── Phase 5: M3Mode ──';
-  sep.style.cssText = 'color:#888;margin:8px 0 4px';
-  out.appendChild(sep);
-
-  // Silence all audio for this test suite
-  const origOsc = audio._osc.bind(audio);
-  audio._osc = () => {};
-
-  // T1: instantiation
-  log('M3Mode instantiated', m3 instanceof M3Mode);
-
-  // T2: configure
-  m3.configure({ playBars: 4, silentBars: 2 });
-  log('configure binds onBeat', typeof metro.onBeat === 'function');
-  log('configure binds onBarEnd', typeof metro.onBarEnd === 'function');
-  log('phase starts as play', m3.phase === 'play');
-
-  // T3: _barsDone resets on configure
-  m3._barsDone = 3;
-  m3.configure({ playBars: 2, silentBars: 1 });
-  log('_barsDone resets on configure', m3._barsDone === 0);
-
-  // T4: phase switches after playBars bar ends
-  m3.configure({ playBars: 2, silentBars: 1 });
-  m3._onBarEnd(audio.currentTime); // bar 1
-  log('phase still play after 1 bar', m3.phase === 'play');
-  m3._onBarEnd(audio.currentTime); // bar 2 → should switch
-  log('phase switches to silent after playBars', m3.phase === 'silent');
-
-  // T5: phase switches back after silentBars
-  m3._onBarEnd(audio.currentTime); // silent bar 1 → switch back
-  log('phase switches back to play', m3.phase === 'play');
-
-  // T6: onPhaseChange fires on switch (via past-time VisualTimer)
-  let phaseFired = false;
-  m3.configure({ playBars: 1, silentBars: 1 });
-  m3.onPhaseChange = () => { phaseFired = true; };
-  m3._onBarEnd(audio.currentTime - 0.001);
-  await new Promise(r => setTimeout(r, 20));
-  log('onPhaseChange fires on phase switch', phaseFired);
-  m3.onPhaseChange = null;
-
-  // T7: beat-1 tracked in _beat1Times (silence audio during test)
-  m3.configure({ playBars: 4, silentBars: 2 });
-  const origOsc5 = audio._osc.bind(audio);
-  audio._osc = () => {};
-  m3._onBeat(audio.currentTime + 0.1, 0, true);  // downbeat
-  m3._onBeat(audio.currentTime + 0.85, 1, false); // not downbeat
-  audio._osc = origOsc5;
-  log('beat-1 tracked', m3._beat1Times.length === 1);
-
-  // T8: checkTap returns grade and diffMs
-  m3._beat1Times = [audio.currentTime - 0.01]; // 10ms ago
-  const result = m3.checkTap();
-  log('checkTap returns grade', typeof result.grade === 'string');
-  log('checkTap returns diffMs', typeof result.diffMs === 'number');
-
-  // T9: perfect tap (< 25ms off)
-  m3._beat1Times = [audio.currentTime];
-  const r2 = m3.checkTap();
-  log('near-perfect tap grades as perfect/great', ['perfect','great'].includes(r2.grade));
-
-  // T10: too-early returns error
-  m3._beat1Times = [];
-  const r3 = m3.checkTap();
-  log('empty beat1Times returns too-early', r3.error === 'too-early');
-
-  // Cleanup
-  audio._osc = origOsc; // restore audio
-  metro.stop(true);
-  metro.onBeat = null; metro.onVisualBeat = null; metro.onBarEnd = null;
-  m3.onPhaseChange = null;
-  audio.unmute();
-}
 
 // ============================================================
 // METRONOMIX v1.6 — Phase 6: SessionEngine
@@ -1736,6 +1357,7 @@ class SessionEngine {
 
   start() {
     if (!this.steps.length) return;
+    clearInterval(this._timer); this._timer = null;
     this.running = true;
     this._startStep(0);
   }
@@ -1744,6 +1366,23 @@ class SessionEngine {
     this.running = false;
     clearInterval(this._timer);
     this._timer = null;
+  }
+
+  // Resume current step timer continuing from where it paused
+  resumeStep() {
+    if (!this.steps.length) return;
+    const step = this.steps[this.current];
+    if (!step || step.isBarMode) { this.running = true; return; }
+    clearInterval(this._timer); this._timer = null;
+    this.running = true;
+    // Continue from saved _secsLeft
+    if (this.onTick) this.onTick(this._secsLeft ?? 0);
+    this._timer = setInterval(() => {
+      if (!this.running) return;
+      this._secsLeft = (this._secsLeft ?? 0) - 1;
+      if (this.onTick) this.onTick(this._secsLeft);
+      if (this._secsLeft <= 0) this.advance();
+    }, 1000);
   }
 
   // Advance to next step — called by bar-end logic or timer
@@ -1778,14 +1417,14 @@ class SessionEngine {
 
     // Time-mode: use interval
     this.metro.barStepMode = false;
-    let secsLeft = Math.round((step.dur ?? 1) * 60);
-    if (this.onTick) this.onTick(secsLeft);
+    this._secsLeft = Math.round((step.dur ?? 1) * 60); // tracked for pause/resume
+    if (this.onTick) this.onTick(this._secsLeft);
 
     this._timer = setInterval(() => {
       if (!this.running) return;
-      secsLeft--;
-      if (this.onTick) this.onTick(secsLeft);
-      if (secsLeft <= 0) this.advance();
+      this._secsLeft--;
+      if (this.onTick) this.onTick(this._secsLeft);
+      if (this._secsLeft <= 0) this.advance();
     }, 1000);
   }
 
@@ -1795,100 +1434,6 @@ class SessionEngine {
 
 const session = new SessionEngine(metro);
 
-function runPhase6Tests() {
-  const out = document.getElementById('v1TestOutput');
-  const log = (msg, ok) => {
-    const d = document.createElement('div');
-    d.textContent = (ok ? '✅ ' : '❌ ') + msg;
-    d.style.color = ok ? '#4ade80' : '#f87171';
-    out.appendChild(d);
-  };
-  const sep = document.createElement('div');
-  sep.textContent = '── Phase 6: SessionEngine ──';
-  sep.style.cssText = 'color:#888;margin:8px 0 4px';
-  out.appendChild(sep);
-
-  const steps = [
-    { bpm: 80,  dur: 0.01, isBarMode: false, label: 'Step 1' },
-    { bpm: 100, dur: 0.01, isBarMode: false, label: 'Step 2' },
-    { bpm: 120, dur: 0.01, isBarMode: false, label: 'Step 3' },
-  ];
-
-  // T1: instantiation
-  log('SessionEngine instantiated', session instanceof SessionEngine);
-
-  // T2: load steps
-  session.load(steps);
-  log('load() stores steps', session.steps.length === 3);
-  log('current resets to 0', session.current === 0);
-
-  // T3: currentStep getter
-  log('currentStep returns first step', session.currentStep?.bpm === 80);
-
-  // T4: totalSteps getter
-  log('totalSteps returns count', session.totalSteps === 3);
-
-  // T5: onStepChange fires on start
-  let stepFired = false, stepIdx = -1;
-  session.onStepChange = (step, idx) => { stepFired = true; stepIdx = idx; };
-  session.stop(); // ensure clean state
-  session.load(steps);
-  session.start();
-  log('onStepChange fires on start', stepFired && stepIdx === 0);
-  session.stop();
-
-  // T6: advance moves to next step
-  session.stop(); // ensure clean
-  let advIdx = -1;
-  session.onStepChange = (step, idx) => { advIdx = idx; };
-  session.load(steps);
-  session.start();
-  session.advance();
-  log('advance() moves to step 1', advIdx === 1);
-  session.stop();
-
-  // T7: onComplete fires after last step
-  session.stop();
-  let completed = false;
-  session.onComplete = () => { completed = true; };
-  session.onStepChange = null;
-  session.load([{ bpm: 80, dur: 0.01, isBarMode: false }]);
-  session.start();
-  session.advance(); // past last step → triggers onComplete
-  log('onComplete fires after last step', completed);
-  session.stop();
-
-  // T8: barStepMode set on bar-mode step
-  session.stop();
-  session.onComplete = null;
-  session.load([{ bpm: 80, isBarMode: true, bars: 4 }]);
-  session.start();
-  log('barStepMode set for bar step', metro.barStepMode === true);
-  log('barStepSize set correctly', metro.barStepSize === 4);
-  session.stop();
-
-  // T9: stop halts timer
-  session.stop();
-  session.load(steps);
-  session.start();
-  session.stop();
-  log('stop() sets running=false', session.running === false);
-
-  // T10: onTick fires with countdown
-  session.stop();
-  let tickVal = -1;
-  session.onTick = (s) => { tickVal = s; };
-  session.load([{ bpm: 80, dur: 0.01, isBarMode: false }]);
-  session.start();
-  log('onTick fires on start', tickVal >= 0);
-  session.stop();
-  // Final cleanup — all callbacks null, all timers cleared
-  session.onTick = null;
-  session.onStepChange = null;
-  session.onComplete = null;
-  clearInterval(session._timer);
-  session._timer = null;
-}
 
 // ============================================================
 // METRONOMIX v1.7 — Phase 7: SceneService
@@ -1970,75 +1515,6 @@ class SceneService {
 
 const scenes = new SceneService('metronomix_scenes_test');
 
-function runPhase7Tests() {
-  const out = document.getElementById('v1TestOutput');
-  const log = (msg, ok) => {
-    const d = document.createElement('div');
-    d.textContent = (ok ? '✅ ' : '❌ ') + msg;
-    d.style.color = ok ? '#4ade80' : '#f87171';
-    out.appendChild(d);
-  };
-  const sep = document.createElement('div');
-  sep.textContent = '── Phase 7: SceneService ──';
-  sep.style.cssText = 'color:#888;margin:8px 0 4px';
-  out.appendChild(sep);
-
-  // Clean slate
-  scenes.clear();
-
-  // T1: instantiation
-  log('SceneService instantiated', scenes instanceof SceneService);
-
-  // T2: save and load
-  scenes.save('test1', 1, { bpm: 80 });
-  const s = scenes.load('test1', 1);
-  log('save() persists scene', s !== null);
-  log('load() returns correct scene', s?.config?.bpm === 80);
-
-  // T3: list by mode
-  scenes.save('test2', 2, { bpm: 100 });
-  log('list(1) returns mode-1 only', scenes.list(1).length === 1);
-  log('list(2) returns mode-2 only', scenes.list(2).length === 1);
-  log('list() returns all', scenes.list().length === 2);
-
-  // T4: overwrite existing
-  scenes.save('test1', 1, { bpm: 120 });
-  log('save() overwrites by name+mode', scenes.load('test1', 1)?.config?.bpm === 120);
-  log('overwrite does not create duplicate', scenes.list(1).length === 1);
-
-  // T5: delete
-  const deleted = scenes.delete('test1', 1);
-  log('delete() returns true', deleted === true);
-  log('delete() removes scene', scenes.load('test1', 1) === null);
-
-  // T6: delete non-existent returns false
-  log('delete() non-existent returns false', scenes.delete('ghost', 1) === false);
-
-  // T7: export / import round-trip
-  scenes.save('export-test', 1, { bpm: 90 });
-  const json = scenes.export('export-test', 1);
-  scenes.delete('export-test', 1);
-  scenes.import(json);
-  log('export() returns JSON string', typeof json === 'string');
-  log('import() restores scene', scenes.load('export-test', 1)?.config?.bpm === 90);
-
-  // T8: import invalid JSON throws
-  let threw = false;
-  try { scenes.import('not json'); } catch { threw = true; }
-  log('import() throws on invalid JSON', threw);
-
-  // T9: savedAt is set
-  const s2 = scenes.load('export-test', 1);
-  log('savedAt is set', typeof s2?.savedAt === 'number');
-
-  // T10: usage returns bytes and pct
-  const u = scenes.usage();
-  log('usage() returns bytes', typeof u.bytes === 'number' && u.bytes > 0);
-  log('usage() returns pct', typeof u.pct === 'number');
-
-  // Cleanup
-  scenes.clear();
-}
 
 // ============================================================
 // METRONOMIX v1.8 — Phase 8: LatencyService
@@ -2113,77 +1589,6 @@ class LatencyService {
 
 const latency = new LatencyService('metronomix_bt_test');
 
-function runPhase8Tests() {
-  const out = document.getElementById('v1TestOutput');
-  const log = (msg, ok) => {
-    const d = document.createElement('div');
-    d.textContent = (ok ? '✅ ' : '❌ ') + msg;
-    d.style.color = ok ? '#4ade80' : '#f87171';
-    out.appendChild(d);
-  };
-  const sep = document.createElement('div');
-  sep.textContent = '── Phase 8: LatencyService ──';
-  sep.style.cssText = 'color:#888;margin:8px 0 4px';
-  out.appendChild(sep);
-
-  latency.clear();
-
-  // T1: instantiation
-  log('LatencyService instantiated', latency instanceof LatencyService);
-
-  // T2: setDelay
-  latency.setDelay(80);
-  log('setDelay() stores delay', latency.delay === 80);
-  log('setDelay() syncs _btDelay', _btDelay === 80);
-
-  // T3: clamps to 0-500
-  latency.setDelay(-10);
-  log('setDelay() clamps below 0', latency.delay === 0);
-  latency.setDelay(9999);
-  log('setDelay() clamps above 500', latency.delay === 500);
-
-  // T4: onChange fires
-  let changed = false;
-  latency.onChange = (ms) => { changed = true; };
-  latency.setDelay(100);
-  log('onChange fires on setDelay', changed);
-  latency.onChange = null;
-
-  // T5: saveDevice
-  latency.setDelay(80);
-  latency.saveDevice('AirPods');
-  log('saveDevice() persists', latency.listDevices().length === 1);
-  log('saveDevice() stores delay', latency.listDevices()[0].delay === 80);
-
-  // T6: loadDevice
-  latency.setDelay(0);
-  latency.loadDevice('AirPods');
-  log('loadDevice() restores delay', latency.delay === 80);
-  log('loadDevice() syncs _btDelay', _btDelay === 80);
-  log('currentDevice set', latency.currentDevice === 'AirPods');
-
-  // T7: loadDevice non-existent returns null
-  log('loadDevice() unknown returns null', latency.loadDevice('Ghost') === null);
-
-  // T8: overwrite device
-  latency.setDelay(120);
-  latency.saveDevice('AirPods');
-  log('saveDevice() overwrites', latency.listDevices().length === 1);
-  log('overwrite updates delay', latency.listDevices()[0].delay === 120);
-
-  // T9: deleteDevice
-  log('deleteDevice() returns true', latency.deleteDevice('AirPods') === true);
-  log('deleteDevice() removes device', latency.listDevices().length === 0);
-  log('deleteDevice() unknown returns false', latency.deleteDevice('Ghost') === false);
-
-  // T10: clear resets everything
-  latency.setDelay(200);
-  latency.saveDevice('Test');
-  latency.clear();
-  log('clear() resets delay', latency.delay === 0);
-  log('clear() removes devices', latency.listDevices().length === 0);
-  log('clear() resets _btDelay', _btDelay === 0);
-}
 
 // ============================================================
 // METRONOMIX v1.9 — Phase 9: Entry Point
@@ -2200,7 +1605,7 @@ const Metronomix = {
   latency,
 
   // Modes
-  m1, m2, m3,
+  m1, m2,
 
   // Start M1 session
   startM1(config = {}) {
@@ -2242,16 +1647,6 @@ const Metronomix = {
   },
 
   // Start M3 game
-  startM3(config = {}) {
-    m3.configure({
-      playBars:   config.playBars   ?? 4,
-      silentBars: config.silentBars ?? 2,
-    });
-    metro.start({
-      bpm:         config.bpm    ?? 80,
-      beatsPerBar: config.timeSig ?? 4,
-    });
-  },
 
   // Start a session with steps (M1 speed change, rounds etc)
   startSession(steps, config = {}) {
@@ -2272,106 +1667,1681 @@ const Metronomix = {
   },
 
   pause()  { metro.pause(); session.stop(); },
-  resume(config = {}) {
-    audio.unmute();
-    metro.resume(config);
+  resume() {
+    metro.resume();
+    session.resumeStep();
   },
 };
 
-async function runPhase9Tests() {
-  const out = document.getElementById('v1TestOutput');
-  const log = (msg, ok) => {
-    const d = document.createElement('div');
-    d.textContent = (ok ? '✅ ' : '❌ ') + msg;
-    d.style.color = ok ? '#4ade80' : '#f87171';
-    out.appendChild(d);
-  };
-  const sep = document.createElement('div');
-  sep.textContent = '── Phase 9: Entry Point ──';
-  sep.style.cssText = 'color:#888;margin:8px 0 4px';
-  out.appendChild(sep);
+// ============================================================
+// METRONOMIX v1.0 — UI Layer
+// ============================================================
 
-  // T1: Metronomix object exists with all services
-  log('Metronomix object exists', typeof Metronomix === 'object');
-  log('has audio', Metronomix.audio instanceof AudioEngine);
-  log('has metro', Metronomix.metro instanceof MetronomeEngine);
-  log('has session', Metronomix.session instanceof SessionEngine);
-  log('has scenes', Metronomix.scenes instanceof SceneService);
-  log('has latency', Metronomix.latency instanceof LatencyService);
-  log('has m1', Metronomix.m1 instanceof M1Mode);
-  log('has m2', Metronomix.m2 instanceof M2Mode);
-  log('has m3', Metronomix.m3 instanceof M3Mode);
 
-  // Silence ALL audio for Phase 9 structural tests
-  const _origOsc9 = audio._osc.bind(audio);
-  audio._osc = () => {};
+function $(id) { return document.getElementById(id); }
 
-  // T2: startM1 starts engine
-  Metronomix.startM1({ bpm: 120, beatsPerBar: 4, tonePreset: 0 });
-  log('startM1() sets metro running', metro.running === true);
-  log('startM1() bound m1', typeof m1.phaseOn === 'boolean');
-  Metronomix.stop();
-  log('stop() halts metro', metro.running === false);
-
-  // T3: startM2 starts engine (silence audio during test)
-  Metronomix.startM2({ bpm: 100, timeSig: 4, subdivPerBeat: 2 });
-  log('startM2() sets metro running', metro.running === true);
-  log('startM2() sets subCount', metro.subCount === 2);
-  Metronomix.stop();
-
-  // T4: startM3 starts engine (silence audio during test)
-  Metronomix.startM3({ bpm: 80, timeSig: 4 });
-  log('startM3() sets metro running', metro.running === true);
-  log('startM3() sets phase to play', m3.phase === 'play');
-  Metronomix.stop();
-
-  // T5: pause/resume cycle (silent)
-  Metronomix.startM1({ bpm: 80, beatsPerBar: 4 });
-  Metronomix.pause();
-  log('pause() stops metro', metro.running === false);
-  Metronomix.resume({ bpm: 80, beatsPerBar: 4, subCount: 1 });
-  log('resume() restarts metro', metro.running === true);
-  Metronomix.stop();
-
-  // T6: scene round-trip via Metronomix
-  const testScenes = new SceneService('metronomix_entry_test');
-  testScenes.clear();
-  testScenes.save('MyScene', 1, { bpm: 140, subDiv: '8' });
-  const loaded = testScenes.load('MyScene', 1);
-  log('scene save/load round-trip', loaded?.config?.bpm === 140);
-  testScenes.clear();
-
-  // T7: latency syncs with VisualTimer
-  Metronomix.latency.setDelay(50);
-  log('latency.setDelay syncs _btDelay', _btDelay === 50);
-  Metronomix.latency.setDelay(0);
-
-  // Restore audio and cleanup
-  audio._osc = _origOsc9;
-  Metronomix.stop();
-  metro.onBeat = null; metro.onVisualBeat = null; metro.onBarEnd = null;
-  audio.unmute();
+function showToast(msg, type='info') {
+  const t = $('toast'); if (!t) return;
+  t.textContent = msg; t.className = 'toast show ' + type;
+  clearTimeout(t._tid);
+  t._tid = setTimeout(() => t.classList.remove('show'), 2800);
 }
-</script>
 
-<div id="v1TestPanel" style="position:fixed;bottom:0;left:0;right:0;background:#111;padding:16px;z-index:999;font-family:monospace;font-size:13px;max-height:50vh;overflow-y:auto;">
-  <div style="color:#aaa;margin-bottom:8px;font-weight:700;">Metronomix v1.9 — All Phases Complete</div>
-  <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;">
-    <button onclick="panelPlay('accent')" style="padding:8px 12px;background:#333;color:#fff;border:none;border-radius:6px;cursor:pointer;">▶ Accent</button>
-    <button onclick="panelPlay('beat')" style="padding:8px 12px;background:#333;color:#fff;border:none;border-radius:6px;cursor:pointer;">▶ Beat</button>
-    <button onclick="panelPlay('sub')" style="padding:8px 12px;background:#333;color:#fff;border:none;border-radius:6px;cursor:pointer;">▶ Sub</button>
-    <button onclick="panelTone()" style="padding:8px 12px;background:#333;color:#fff;border:none;border-radius:6px;cursor:pointer;">▶ Tone</button>
-    <button onclick="panelChime()" style="padding:8px 12px;background:#333;color:#fff;border:none;border-radius:6px;cursor:pointer;">🔔 Chime</button>
-    <button id="muteBtn" onclick="toggleMute()" style="padding:8px 12px;background:#333;color:#fff;border:none;border-radius:6px;cursor:pointer;">🔇 Mute</button>
-    <button onclick="document.getElementById('v1TestOutput').innerHTML='';runPhase1Tests().then(() => runPhase2Tests()).then(() => runPhase3Tests()).then(() => runPhase4Tests()).then(() => runPhase5Tests()).then(() => { runPhase6Tests(); runPhase7Tests(); runPhase8Tests(); return runPhase9Tests(); }).catch(console.error);" style="padding:8px 12px;background:#1a5c38;color:#fff;border:none;border-radius:6px;cursor:pointer;">🧪 Run Tests</button>
-  </div>
-  <div id="v1TestOutput"></div>
-</div>
-<style>
-/* Hide all app UI — not available in v1.1 */
-.app-header, #m1, #m2, #m3,
-#scenesModal, #saveSceneDialog, #btModal { display: none !important; }
-body { padding-bottom: 0; }
-</style>
-</body>
+function formatTime(secs) {
+  const m = Math.floor(secs/60), s = secs % 60;
+  return m > 0 ? `${m}:${String(s).padStart(2,'0')}` : `0:${String(s).padStart(2,'0')}`;
+}
+
+function setPill(containerId, attr, value) {
+  const c = $(containerId); if (!c) return;
+  c.querySelectorAll(`[${attr}]`).forEach(p =>
+    p.classList.toggle('sel', p.getAttribute(attr) === String(value)));
+}
+
+function getPill(containerId, attr) {
+  return $(containerId)?.querySelector(`[${attr}].sel`)?.getAttribute(attr) ?? null;
+}
+
+function syncSlider(sliderId, boxId, cb) {
+  const sl = $(sliderId), bx = $(boxId); if (!sl || !bx) return;
+  const clamp = v => Math.max(+sl.min||0, Math.min(+sl.max||999, v));
+  sl.addEventListener('input',  () => { bx.value = sl.value; cb(+sl.value); });
+  bx.addEventListener('change', () => { const v=clamp(+bx.value||+sl.min); sl.value=bx.value=v; cb(v); });
+}
+
+//  UI state 
+let activeVer    = 1;
+let m1TimeSig    = 4;
+let m1TonePreset = 0;
+let m1SubdivNum  = 1;
+let m1FixedBpm   = 80;
+let m1SpeedMode  = 'fixed';
+let phaseOn      = false, phaseBeat = 0, anchorBars = 1, shiftBars = 1;
+let silentOn     = false, silentRandom = false, playBars = 3, silentBars = 1;
+let _barsPlayed  = 0;
+
+const SUBDIV_NUM_MAP = { 1:'4', 2:'8', 3:'t', 4:'16' };
+const DIV_MAP        = { '4':'4', '8':'8', '16':'16', 't':'t' };
+
+function getTotalDurMins() {
+  const mins = parseInt($('m1DurMins')?.value) || 0;
+  const secs = parseInt($('m1DurSecs')?.value) || 0;
+  return Math.max(1/60, (mins * 60 + secs) / 60);
+}
+
+function getStepDurMins() {
+  const mins = parseInt($('stepDurMins')?.value) || 0;
+  const secs = parseInt($('stepDurSecs')?.value) || 0;
+  return Math.max(1/60, (mins * 60 + secs) / 60);
+}
+
+//  Version toggle 
+function switchVer(v) {
+  activeVer = v;
+  [1,2,3].forEach(i => {
+    const el = $(`m${i}`); if (el) el.style.display = i===v ? '' : 'none';
+    const btn = $(`verBtn${i}`);
+    if (btn) { btn.classList.toggle('active', i===v); btn.classList.toggle('sel', i===v); }
+  });
+}
+$('verBtn1').addEventListener('click', () => switchVer(1));
+$('verBtn2').addEventListener('click', () => switchVer(2));
+
+
+//  Tone 
+$('m1TonePills').addEventListener('click', e => {
+  const p = e.target.closest('[data-tone]'); if (!p) return;
+  m1TonePreset = +p.dataset.tone;
+  $('m1TonePills').querySelectorAll('[data-tone]').forEach(x =>
+    x.classList.toggle('sel', +x.dataset.tone === m1TonePreset));
+  m1.tonePreset = m1TonePreset;
+});
+
+//  Time signature 
+$('m1TimeSigPills').addEventListener('click', e => {
+  const p = e.target.closest('[data-ts]'); if (!p) return;
+  m1TimeSig = +p.dataset.ts;
+  $('m1TimeSigPills').querySelectorAll('[data-ts]').forEach(x =>
+    x.classList.toggle('sel', +x.dataset.ts === m1TimeSig));
+  buildBeatDots();
+});
+
+function buildBeatDots() {
+  const el = $('beatDots'); if (!el) return;
+  el.innerHTML = '';
+  for (let i=0; i<m1TimeSig; i++) {
+    const d = document.createElement('div');
+    d.className = 'bdot' + (i===0 ? ' accent' : '');
+    el.appendChild(d);
+  }
+}
+
+//  Subdivision 
+$('m1SubdivPills').addEventListener('click', e => {
+  const p = e.target.closest('.pill[data-subdiv]'); if (!p) return;
+  m1SubdivNum = parseInt(p.dataset.subdiv);
+  $('m1SubdivPills').querySelectorAll('.pill').forEach(x => x.classList.remove('sel'));
+  p.classList.add('sel');
+});
+
+//  Phase shift 
+$('phaseEnabled').addEventListener('change', e => {
+  phaseOn = e.target.checked;
+  const po = $('phaseOptions'), ss = $('m1SubdivSection');
+  if (po) po.style.display = phaseOn ? '' : 'none';
+  if (ss) ss.style.display = phaseOn ? 'none' : '';
+});
+
+$('subDivTabs').addEventListener('click', e => {
+  const p = e.target.closest('[data-div]'); if (!p) return;
+  $('subDivTabs').querySelectorAll('[data-div]').forEach(x => x.classList.remove('sel'));
+  p.classList.add('sel');
+  buildBeatGrid(p.dataset.div);
+});
+
+$('anchorMeasures').addEventListener('click', e => {
+  const p = e.target.closest('[data-m]'); if (!p) return;
+  anchorBars = +p.dataset.m;
+  $('anchorMeasures').querySelectorAll('[data-m]').forEach(x =>
+    x.classList.toggle('sel', +x.dataset.m === anchorBars));
+});
+
+$('shiftMeasures').addEventListener('click', e => {
+  const p = e.target.closest('[data-m]'); if (!p) return;
+  shiftBars = +p.dataset.m;
+  $('shiftMeasures').querySelectorAll('[data-m]').forEach(x =>
+    x.classList.toggle('sel', +x.dataset.m === shiftBars));
+});
+
+function buildBeatGrid(divKey) {
+  const el = $('beatGrid'); if (!el) return;
+  const labelMap = { '4':['beat 1'], '8':['beat 1','+'], 't':['beat 1','tri','plet'], '16':['beat 1','e','+','a'] };
+  const labels = labelMap[divKey] || ['beat 1'];
+  el.innerHTML = ''; phaseBeat = 0;
+  labels.forEach((lbl, i) => {
+    const s = document.createElement('span');
+    s.className = 'pill' + (i===0 ? ' sel-coral' : '');
+    s.textContent = lbl;
+    s.addEventListener('click', () => {
+      phaseBeat = i;
+      el.querySelectorAll('.pill').forEach(p => p.classList.remove('sel','sel-coral'));
+      s.classList.add('sel-coral');
+    });
+    el.appendChild(s);
+  });
+}
+
+//  Silent bars 
+$('m1SilentEnabled').addEventListener('change', e => {
+  silentOn = e.target.checked;
+  const opts = $('m1SilentOpts'); if (opts) opts.style.display = silentOn ? '' : 'none';
+});
+$('m1SilentRandom').addEventListener('change', e => { silentRandom = e.target.checked; });
+syncSlider('m1PlayBars',   'm1PlayBarsBox',   v => { playBars   = v; });
+syncSlider('m1SilentBars', 'm1SilentBarsBox', v => { silentBars = v; });
+
+//  Fixed BPM 
+syncSlider('m1FixedBpm', 'm1FixedBpmBox', v => { m1FixedBpm = v; });
+syncSlider('m1Rounds',   'm1RoundsBox',   () => {});
+['m1DurMins','m1DurSecs'].forEach(id => $(id)?.addEventListener('change', () => {}));
+
+//  Rest between rounds 
+$('m1RestEnabled').addEventListener('change', e => {
+  const row = $('m1RestRow');
+  if (row) row.style.display = e.target.checked ? '' : 'none';
+});
+syncSlider('m1RestDur', 'm1RestDurBox', () => {});
+
+//  Tap tempo 
+function setupTap(btnId, displayId, sliderId, boxId, onVal) {
+  const btn = $(btnId); if (!btn) return;
+  let taps = [], tapTimer = null;
+  btn.addEventListener('click', () => {
+    const now = Date.now();
+    taps = taps.filter(t => now-t < 3000); taps.push(now);
+    clearTimeout(tapTimer); btn.classList.add('detected');
+    tapTimer = setTimeout(() => { btn.classList.remove('detected'); taps = []; }, 3000);
+    if (taps.length < 2) { if ($(displayId)) $(displayId).textContent = 'Tap...'; return; }
+    const avg = Math.round(60000/((taps[taps.length-1]-taps[0])/(taps.length-1)));
+    const v = Math.max(40, Math.min(240, avg));
+    if ($(sliderId)) { $(sliderId).value = v; $(boxId).value = v; }
+    if ($(displayId)) $(displayId).textContent = v + ' BPM';
+    onVal(v);
+  });
+}
+setupTap('tapBtn',      'tapBpm',      'm1FixedBpm', 'm1FixedBpmBox', v => { m1FixedBpm = v; });
+setupTap('tapBtnStart', 'tapBpmStart', 'startBpm',   'startBpmBox',   () => {});
+setupTap('tapBtnEnd',   'tapBpmEnd',   'endBpm',     'endBpmBox',     () => {});
+
+//  Visual 
+function setupM1Visual() {
+  metro.onVisualBeat = ({ beat }) => {
+    document.querySelectorAll('#beatDots .bdot').forEach((d,i) =>
+      d.classList.toggle('on', i===beat));
+  };
+  // Chain with M1Mode's onBarEnd (phase shift uses it too)
+  const _prevBarEnd = metro.onBarEnd;
+  metro.onBarEnd = (t) => {
+    if (!metro.barStepMode) { if (_prevBarEnd) _prevBarEnd(t); return; }
+    const shouldAdvance = metro._pendingAdvance;
+    if (shouldAdvance) metro._pendingAdvance = false;
+    if (_prevBarEnd) _prevBarEnd(t);
+    // Delay visual update to match when the bar actually sounds
+    // t is the last beat of the bar — add one beat to get beat 1 of next bar
+    const spb = 60 / metro.bpm;
+    const delay = Math.max(0, (t + spb - (metro.audio._ctx?.currentTime ?? t)) * 1000);
+    setTimeout(() => {
+      if (shouldAdvance) {
+        _barsPlayed = 0;
+        session.advance();
+      } else {
+        _barsPlayed++;
+        const el = $('m1LiveTime');
+        if (el) el.textContent = `${_barsPlayed + 1}/${metro.barStepSize} bars`;
+      }
+    }, delay);
+  };
+}
+
+//  Step list 
+function buildStepsList(steps, listId) {
+  const list = $(listId); if (!list) return;
+  list.innerHTML = '';
+  steps.forEach((s, i) => {
+    const el = document.createElement('div');
+    el.className = 'step-item'; el.dataset.idx = i;
+    el.textContent = s.label || s.bpm + ' BPM';
+    list.appendChild(el);
+  });
+}
+
+function updateActiveStep(listId, idx) {
+  document.querySelectorAll(`#${listId} .step-item`).forEach((el,i) => {
+    el.classList.toggle('active', i===idx);
+    if (i===idx) el.scrollIntoView({ block:'nearest', behavior:'smooth' });
+  });
+}
+
+//  Pause button 
+const SVG_PAUSE = '<svg width="20" height="20" viewBox="0 0 20 20" fill="none"><rect x="4" y="3" width="4.5" height="14" rx="1.5" fill="white"/><rect x="11.5" y="3" width="4.5" height="14" rx="1.5" fill="white"/></svg>';
+const SVG_PLAY  = '<svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M5 3.5L17 10L5 16.5V3.5Z" fill="white"/></svg>';
+
+function setPauseBtn(paused) {
+  ['m1PauseBtn','m2PauseBtn'].forEach(id => {
+    const btn = $(id); if (!btn) return;
+    btn.innerHTML = paused ? SVG_PLAY : SVG_PAUSE;
+    btn.style.background = paused ? '#16a34a' : '#2563eb';
+  });
+}
+
+function stopM1UI() {
+  const setup = $('m1Setup'), sess = $('m1Session');
+  if (setup) setup.style.display = '';
+  if (sess)  sess.style.display  = 'none';
+  setPauseBtn(false);
+  document.querySelectorAll('#beatDots .bdot').forEach(d => d.classList.remove('on'));
+  _keepWake = false; WakeLock.release();
+}
+
+//  Count-in 
+function wireCountIn(countInOn, onDone) {
+  if (!countInOn) { metro.onCountInBeat = null; metro.onCountInEnd = null; onDone(); return; }
+  const ci = $('countInDisplay'), sm = $('m1SessionMain'), cb = $('countInBeat');
+  if (ci) ci.style.display = '';
+  if (sm) sm.style.display = 'none';
+  metro.onCountInBeat = beatNum => { if (cb) cb.textContent = beatNum; };
+  metro.onCountInEnd  = () => {
+    if (ci) ci.style.display = 'none';
+    if (sm) sm.style.display = '';
+    onDone();
+  };
+}
+
+//  Build steps 
+function buildFixedSteps() {
+  const rounds    = +($('m1Rounds')?.value) || 1;
+  const restOn    = $('m1RestEnabled')?.checked ?? false;
+  const restDur   = (parseInt($('m1RestDurBox')?.value) || 30) / 60;
+  const restClick = $('m1RestClick')?.checked ?? false;
+  const dur       = getTotalDurMins();
+  const steps = [];
+  for (let r=0; r<rounds; r++) {
+    steps.push({ bpm: m1FixedBpm, dur, isBarMode: false, label: m1FixedBpm + ' BPM' });
+    if (restOn && r < rounds-1)
+      steps.push({ bpm: m1FixedBpm, dur: restDur, isRest: true, restClick, label: 'Rest' });
+  }
+  // Rest after last round (cooldown)
+  if (restOn)
+    steps.push({ bpm: m1FixedBpm, dur: restDur, isRest: true, restClick, label: 'Rest' });
+  return steps;
+}
+
+function buildRampSteps() {
+  const s    = Math.max(1, parseInt($('startBpmBox')?.value)  || 80);
+  const e    = Math.max(1, parseInt($('endBpmBox')?.value)    || 120);
+  const sz   = Math.max(1, parseInt($('stepSizeBox')?.value)  || 1);
+  const dir  = e >= s ? 1 : -1;
+  const restOn    = $('m1RampRestEnabled')?.checked ?? false;
+  const restClick = $('m1RampRestClick')?.checked ?? false;
+  const isBarMode = getPill('m1RampModePills', 'data-rmode') === 'bars';
+  const dur  = isBarMode ? 999 : getStepDurMins();
+  const bars = isBarMode ? (parseInt($('stepBarsBox')?.value) || 4) : 0;
+  const restBars = isBarMode
+    ? (parseInt($('m1RampRestBarsBox')?.value) || 2)
+    : (parseInt($('m1RampRestDurBox')?.value)  || 30) / 60 * 60; // unused in time mode
+  const restDur  = isBarMode ? 999 : (parseInt($('m1RampRestDurBox')?.value) || 30) / 60;
+  const steps = [];
+  let cur = s;
+  while (dir===1 ? cur<=e : cur>=e) {
+    steps.push({ bpm:cur, dur, bars, isBarMode, label: cur+' BPM' });
+    if (restOn) steps.push({ bpm:cur, dur:restDur, bars:restBars, isBarMode, isRest:true, restClick, label:'Rest' });
+    cur += dir * sz;
+  }
+  return steps;
+}
+
+//  M1 Start 
+$('m1StartBtn').addEventListener('click', () => {
+  const countInOn  = $('m1CountIn')?.checked ?? false;
+  const steps      = m1SpeedMode === 'ramp' ? buildRampSteps() : buildFixedSteps();
+  const roundSteps  = steps.filter(s => !s.isRest);
+  const totalRounds = roundSteps.length;
+
+  buildStepsList(steps, 'm1StepsList');
+
+  session.onStepChange = (step, idx) => {
+    metro.bpm       = step.bpm;
+    metro.silentBar = step.isRest && !step.restClick;
+    // Update bar mode settings for new step
+    if (step.isBarMode) {
+      metro.barStepMode  = true;
+      metro.barStepSize  = step.bars ?? 4;
+      metro.barStepCount = 0;
+      metro._pendingAdvance = false;
+      _barsPlayed = 0;
+      const el = $('m1LiveTime');
+      if (el) el.textContent = `1/${metro.barStepSize} bars`;
+    } else {
+      metro.barStepMode = false;
+    }
+    $('m1LiveBpm').textContent = step.isRest ? 'Rest' : step.bpm;
+    updateActiveStep('m1StepsList', idx);
+    if (idx > 0) {
+      if (step.isRest) {
+        audio.chime([660, 440], 160);
+        showToast('Rest', 'info');
+      } else {
+        const roundIdx = steps.slice(0, idx+1).filter(s => !s.isRest).length;
+        const label = totalRounds > 1 ? ` · Round ${roundIdx}/${totalRounds}` : '';
+        audio.chime([880, 1100], 160);
+        showToast(`${step.bpm} BPM${label}`, 'info');
+      }
+    }
+  };
+
+  session.onComplete = () => {
+    // Stop scheduler only — don't touch audio so chime can play
+    clearInterval(metro._timer); metro._timer = null;
+    metro.running = false;
+    session.stop();
+    audio.chime([523,659,784,1047], 180);
+    showToast('Session complete! 🎉', 'success');
+    setTimeout(() => { metro.stop(); stopM1UI(); }, 3500);
+  };
+
+  session.onTick = s => {
+    const el = $('m1LiveTime');
+    if (el && !metro.barStepMode) el.textContent = formatTime(s);
+  };
+
+  const subDiv = phaseOn
+    ? (DIV_MAP[getPill('subDivTabs','data-div')] || '4')
+    : (SUBDIV_NUM_MAP[m1SubdivNum] || '4');
+
+  m1.configure({ tonePreset: m1TonePreset, subDiv, phaseOn, phaseBeat, anchorBars, shiftBars });
+
+  setupM1Visual(); // must be AFTER m1.configure() which sets onBarEnd
+
+  const firstStep = steps[0];
+  metro.start({
+    bpm: firstStep.bpm, beatsPerBar: m1TimeSig,
+    subCount: metro.subCount,
+    countIn: countInOn,
+    silentEnabled: silentOn, silentRandom, playBars, silentBars,
+    barStepMode: firstStep.isBarMode,
+    barStepSize: firstStep.bars ?? 4,
+  });
+
+  if (audio._master && audio._ctx)
+    audio._master.gain.setValueAtTime(1, audio._ctx.currentTime);
+
+  wireCountIn(countInOn, () => { session.load(steps); session.start(); });
+
+  $('m1Setup').style.display   = 'none';
+  $('m1Session').style.display = '';
+  $('m1LiveBpm').textContent   = firstStep.bpm;
+  setPauseBtn(false);
+  buildBeatDots();
+  _keepWake = true; WakeLock.request();
+});
+
+//  Pause / Resume 
+$('m1PauseBtn').addEventListener('click', () => {
+  if (!metro.running) {
+    const countInOn = $('m1CountIn')?.checked ?? false;
+    metro.resume(countInOn);
+    wireCountIn(countInOn, () => session.resumeStep());
+    if (!countInOn) session.resumeStep();
+    setPauseBtn(false);
+  } else {
+    metro.pause();
+    session.stop();
+    setPauseBtn(true);
+  }
+});
+
+//  Stop 
+$('m1StopBtn').addEventListener('click', () => {
+  Metronomix.stop(); session.stop(); stopM1UI();
+});
+
+//  Ramp controls 
+syncSlider('startBpm',      'startBpmBox',      () => {});
+syncSlider('endBpm',        'endBpmBox',        () => {});
+syncSlider('stepSize',      'stepSizeBox',      () => {});
+syncSlider('stepBars',      'stepBarsBox',      () => {});
+syncSlider('m1RampRestDur',  'm1RampRestDurBox',  () => {});
+syncSlider('m1RampRestBars', 'm1RampRestBarsBox', () => {});
+['stepDurMins','stepDurSecs'].forEach(id => $(id)?.addEventListener('change', () => {}));
+
+$('m1RampRestEnabled').addEventListener('change', e => {
+  const row = $('m1RampRestRow'); if (row) row.style.display = e.target.checked ? '' : 'none';
+});
+
+$('m1RampModePills').addEventListener('click', e => {
+  const p = e.target.closest('[data-rmode]'); if (!p) return;
+  const mode = p.dataset.rmode;
+  $('m1RampModePills').querySelectorAll('[data-rmode]').forEach(x =>
+    x.classList.toggle('sel', x.dataset.rmode === mode));
+  // Step duration rows
+  const durRow  = $('m1StepDurRow');
+  const barsRow = $('m1StepBarsRow');
+  if (durRow)  durRow.style.display  = mode === 'time' ? '' : 'none';
+  if (barsRow) barsRow.style.display = mode === 'bars' ? '' : 'none';
+  // Rest duration rows
+  const restDurRow  = $('m1RampRestDurRow');
+  const restBarsRow = $('m1RampRestBarsRow');
+  if (restDurRow)  restDurRow.style.display  = mode === 'time' ? '' : 'none';
+  if (restBarsRow) restBarsRow.style.display = mode === 'bars' ? '' : 'none';
+});
+
+//  Speed mode toggle 
+function setupModeToggle(modeRowId, fixedRowId, fixedDurRowId, rampOptsId) {
+  const modeRow = $(modeRowId); if (!modeRow) return;
+  modeRow.addEventListener('click', e => {
+    const btn = e.target.closest('.mode-btn[data-mode]'); if (!btn) return;
+    const mode = btn.dataset.mode;
+    if (modeRowId === 'm1ModeRow') m1SpeedMode = mode;
+    modeRow.querySelectorAll('.mode-btn').forEach(b => b.classList.toggle('active', b===btn));
+    const fr = $(fixedRowId), fdr = $(fixedDurRowId), ro = $(rampOptsId);
+    if (fr)  fr.style.display  = mode==='fixed' ? '' : 'none';
+    if (fdr) fdr.style.display = mode==='fixed' ? '' : 'none';
+    if (ro)  ro.classList.toggle('hidden', mode!=='ramp');
+  });
+}
+setupModeToggle('m1ModeRow','m1FixedRow','m1FixedDurRow','m1RampOpts');
+
+//  Init 
+buildBeatDots();
+buildBeatGrid('4');
+switchVer(1);
+setPill('m1TonePills',    'data-tone',   0);
+setPill('m1TimeSigPills', 'data-ts',     4);
+setPill('m1SubdivPills',  'data-subdiv', '1');
+setPill('subDivTabs',     'data-div',    '4');
+setPill('anchorMeasures', 'data-m',      1);
+setPill('shiftMeasures',  'data-m',      1);
+setPauseBtn(false);
+
+// ============================================================
+// M2 — Step Sequencer
+// ============================================================
+
+const M2_ROWS = 5;
+const M2_ROW_COLORS = ['#e85d5d', '#e8a23a', '#4caf7d', '#4a9edd', '#a855f7'];
+let m2TimeSig   = 4;
+let m2Subdiv    = 1;
+let m2Measures  = 1;
+let m2Bpm       = 80;
+let m2Pattern   = Array.from({length: M2_ROWS}, () => []);
+let m2ActiveCol = -1;
+
+function m2TotalCols() { return m2TimeSig * m2Subdiv * m2Measures; }
+
+const M2_SUB_LABELS = {
+  1: (bi, si) => si===0 ? String(bi+1) : '·',
+  2: (bi, si) => si===0 ? String(bi+1) : '+',
+  3: (bi, si) => si===0 ? String(bi+1) : ['tri','plet'][si-1]||'·',
+  4: (bi, si) => si===0 ? String(bi+1) : ['e','+','a'][si-1]||'·',
+};
+
+function buildM2Grid(targetId = 'beatGridM2') {
+  const container = $(targetId); if (!container) return;
+  const cols = m2TotalCols();
+  const colsPerMeas = m2TimeSig * m2Subdiv;
+
+  m2Pattern = m2Pattern.map(row =>
+    Array.from({length: cols}, (_, i) => row[i] ?? false));
+  m2.pattern = m2Pattern.map(r => [...r]);
+
+  const getLbl = M2_SUB_LABELS[m2Subdiv] || M2_SUB_LABELS[1];
+  const CELL = 24, GAP = 3, SEP = 8;
+
+  container.innerHTML = '';
+  container.style.cssText = 'overflow-x:auto;';
+
+  const table = document.createElement('table');
+  table.style.cssText = 'border-collapse:separate; border-spacing:0;';
+
+  // Row 0: measure labels
+  const measRow = document.createElement('tr');
+  // Row 1: beat numbers
+  const numRow = document.createElement('tr');
+  // Row 2: dots
+  const dotRow = document.createElement('tr');
+  // Rows 2+: pattern rows
+  const dataRows = Array.from({length: M2_ROWS}, () => document.createElement('tr'));
+
+  // Spacer column
+  const addSpacer = (tr, w=6) => {
+    const td = document.createElement('td');
+    td.style.cssText = `width:${w}px; min-width:${w}px; padding:0;`;
+    tr.appendChild(td);
+  };
+  [measRow, numRow, dotRow, ...dataRows].forEach(tr => addSpacer(tr));
+
+  for (let c = 0; c < cols; c++) {
+    const bi = Math.floor((c % colsPerMeas) / m2Subdiv);
+    const si = c % m2Subdiv;
+    const isMeasBound = c > 0 && c % colsPerMeas === 0;
+    const isBeatBound = si === 0 && !isMeasBound;
+
+    // Separator before measure
+    if (isMeasBound) {
+      [measRow, numRow, dotRow, ...dataRows].forEach(tr => {
+        const td = document.createElement('td');
+        td.style.cssText = `width:${SEP}px; min-width:${SEP}px; padding:0; border-left:2px solid var(--text3);`;
+        tr.appendChild(td);
+      });
+    }
+
+    const pad = `padding:0 0 ${GAP}px ${isBeatBound && c>0 ? GAP : 0}px;`;
+
+    // Measure label cell
+    const measTd = document.createElement('td');
+    measTd.style.cssText = pad;
+    if (si === 0) {
+      const measNum = Math.floor(c / colsPerMeas) + 1;
+      const measDiv = document.createElement('div');
+      measDiv.style.cssText = `width:${CELL}px; text-align:center; font-size:9px; color:var(--text3); padding-bottom:2px;`;
+      measDiv.textContent = si === 0 && bi === 0 ? `M${measNum}` : '';
+      measTd.appendChild(measDiv);
+    }
+    measRow.appendChild(measTd);
+
+    // Beat number cell
+    const numTd = document.createElement('td');
+    numTd.style.cssText = pad;
+    const numDiv = document.createElement('div');
+    numDiv.style.cssText = `width:${CELL}px; text-align:center; font-size:9px; color:${si===0?'var(--text2)':'var(--text3)'}; padding-bottom:2px;`;
+    numDiv.textContent = getLbl(bi, si);
+    numTd.appendChild(numDiv);
+    numRow.appendChild(numTd);
+
+    // Dot cell
+    const dotTd = document.createElement('td');
+    dotTd.style.cssText = pad;
+    const dot = document.createElement('div');
+    dot.style.cssText = `width:${CELL}px; display:flex; justify-content:center; padding-bottom:${GAP}px;`;
+    const circle = document.createElement('div');
+    circle.dataset.dotCol = c;
+    circle.style.cssText = 'width:6px; height:6px; border-radius:50%; background:var(--border2); transition:background 0.05s;';
+    dot.appendChild(circle);
+    dotTd.appendChild(dot);
+    dotRow.appendChild(dotTd);
+
+    // Pattern cells
+    dataRows.forEach((tr, r) => {
+      const td = document.createElement('td');
+      td.style.cssText = pad;
+      const btn = document.createElement('button');
+      btn.dataset.row = r; btn.dataset.col = c;
+      const rowColor = M2_ROW_COLORS[r];
+      btn.style.cssText = `width:${CELL}px; height:${CELL}px; border-radius:4px; border:1px solid var(--border2); background:${m2Pattern[r][c]?rowColor:'var(--bg)'}; cursor:pointer; display:block;`;
+      btn.addEventListener('mousedown', e => m2HandleMouseDown(e, r, c, btn));
+      btn.addEventListener('mouseenter', e => m2HandleMouseEnter(e, r, c, btn));
+      btn.addEventListener('click', e => m2HandleClick(e, r, c, btn));
+      td.appendChild(btn);
+      tr.appendChild(td);
+    });
+  }
+
+  [measRow, numRow, dotRow, ...dataRows].forEach(tr => table.appendChild(tr));
+  container.appendChild(table);
+}
+
+function setupM2Visual() {
+  m2.onGridBeat = ({ col }) => {
+    m2ActiveCol = col;
+    // Update dots
+    document.querySelectorAll('[data-dot-col]').forEach(dot => {
+      dot.style.background = +dot.dataset.dotCol === col ? '#f97316' : 'var(--border2)';
+    });
+    // Update cell colors
+    document.querySelectorAll('#sessionBeatGrid button, #beatGridM2 button').forEach(btn => {
+      const c = +btn.dataset.col, r = +btn.dataset.row;
+      const isOn = m2Pattern[r]?.[c];
+      const rc = M2_ROW_COLORS[r];
+      btn.style.background = c===col && isOn ? '#f97316'
+        : c===col ? 'var(--bg3,#2a2a2a)'
+        : isOn ? rc : 'var(--bg)';
+    });
+  };
+}
+
+
+//  M2 Copy/Paste/Undo/Redo 
+let m2CopyMode    = false;
+let m2PasteMode   = false;
+let m2Selection   = new Set();
+let m2Clipboard   = null;
+let m2IsDragging  = false;
+let m2DragStart   = null;
+let m2DragAdding  = true;
+let m2DidDrag     = false;
+let m2History     = [];
+let m2HistoryIdx  = -1;
+
+function m2SaveHistory() {
+  m2History = m2History.slice(0, m2HistoryIdx + 1);
+  m2History.push(m2Pattern.map(r => [...r]));
+  m2HistoryIdx = m2History.length - 1;
+}
+
+function m2UpdateSelCount() {
+  const info = $('copyInfo');
+  if (info) info.textContent = m2Selection.size > 0 ? `${m2Selection.size} cells selected` : '';
+  const doCopy = $('doCopyBtn');
+  if (doCopy) doCopy.disabled = m2Selection.size === 0;
+}
+
+function m2RefreshGrid() {
+  ['beatGridM2', 'sessionBeatGrid'].forEach(id => {
+    const grid = $(id); if (!grid) return;
+    grid.querySelectorAll('button[data-row]').forEach(btn => {
+      const r = +btn.dataset.row, c = +btn.dataset.col;
+      const isOn = m2Pattern[r]?.[c];
+      const isSelected = m2Selection.has(`${r},${c}`);
+      btn.style.background = isSelected
+        ? (isOn ? '#f0c040' : 'rgba(240,192,64,0.25)')
+        : isOn ? M2_ROW_COLORS[r] : 'var(--bg)';
+      btn.style.outline = isSelected ? '2px solid #f0c040' : 'none';
+    });
+  });
+  m2UpdateSelCount();
+}
+
+// Enter/exit copy mode
+function m2EnterCopyMode() {
+  m2CopyMode = true; m2PasteMode = false;
+  m2Selection = new Set();
+  $('copyToolbar') && ($('copyToolbar').style.display = 'block');
+  $('copyBtnRow') && ($('copyBtnRow').style.display = '');
+  $('pasteBtnRow') && ($('pasteBtnRow').style.display = 'none');
+  $('copyInstruction') && ($('copyInstruction').innerHTML = 'Tap a cell or drag to select a range, then press <strong>Copy sel</strong>');
+  $('m2CopyToggleBtn').classList.add('active');
+  m2RefreshGrid();
+}
+
+function m2ExitCopyMode() {
+  m2CopyMode = false; m2PasteMode = false;
+  m2Selection = new Set();
+  $('copyToolbar')?.style && ($('copyToolbar').style.display = 'none');
+  $('m2CopyToggleBtn').classList.remove('active');
+  m2RefreshGrid();
+}
+
+// Copy mode toggle
+$('m2CopyToggleBtn')?.addEventListener('click', () => {
+  if (m2CopyMode) m2ExitCopyMode();
+  else m2EnterCopyMode();
+});
+
+// Cell interaction in copy mode
+function m2HandleMouseDown(e, r, c, btn) {
+  if (!m2CopyMode) return;
+  if (!m2PasteMode) e.preventDefault();
+  m2IsDragging = true; m2DidDrag = false;
+  m2DragStart  = {r, c};
+  m2DragAdding = !m2Selection.has(`${r},${c}`);
+}
+
+function m2HandleMouseEnter(e, r, c, btn) {
+  if (!m2CopyMode || !m2IsDragging) return;
+  m2DidDrag = true;
+  const startKey = `${m2DragStart.r},${m2DragStart.c}`;
+  const key = `${r},${c}`;
+  if (m2DragAdding) { m2Selection.add(startKey); m2Selection.add(key); }
+  else { m2Selection.delete(startKey); m2Selection.delete(key); }
+  m2RefreshGrid();
+}
+
+function m2HandleClick(e, r, c, btn) {
+  if (m2PasteMode) return; // handled by document capturing
+  if (m2CopyMode) {
+    m2IsDragging = false;
+    if (m2DidDrag) { m2DidDrag = false; return; }
+    const key = `${r},${c}`;
+    if (m2Selection.has(key)) m2Selection.delete(key);
+    else m2Selection.add(key);
+    m2RefreshGrid();
+    return;
+  }
+  // Normal mode: toggle cell
+  m2SaveHistory();
+  m2Pattern[r][c] = !m2Pattern[r][c];
+  btn.style.background = m2Pattern[r][c] ? M2_ROW_COLORS[r] : 'var(--bg)';
+  btn.style.outline = 'none';
+  m2.pattern = m2Pattern.map(row => [...row]);
+  m2UpdateToolbar();
+}
+
+document.addEventListener('mouseup', () => { m2IsDragging = false; });
+
+// Copy selection
+$('doCopyBtn')?.addEventListener('click', () => {
+  if (m2Selection.size === 0) return;
+  let minR=M2_ROWS, minC=m2TotalCols(), maxR=0, maxC=0;
+  m2Selection.forEach(key => {
+    const [r,c] = key.split(',').map(Number);
+    minR=Math.min(minR,r); minC=Math.min(minC,c);
+    maxR=Math.max(maxR,r); maxC=Math.max(maxC,c);
+  });
+  const rows=maxR-minR+1, cols=maxC-minC+1;
+  m2Clipboard = Array.from({length:rows}, (_,dr) =>
+    Array.from({length:cols}, (_,dc) => {
+      const key=`${minR+dr},${minC+dc}`;
+      return m2Selection.has(key) ? (m2Pattern[minR+dr]?.[minC+dc] ?? false) : null;
+    })
+  );
+  m2Selection = new Set();
+  // Switch to paste mode
+  m2PasteMode = true;
+  $('copyBtnRow').style.display = 'none';
+  $('pasteBtnRow').style.display = '';
+  const instr = $('copyInstruction');
+  if (instr) instr.innerHTML = `Tap the <strong>top-left destination cell</strong> to paste the ${cols}×${rows} pattern.`;
+  const info = $('copyInfo');
+  if (info) info.textContent = `${rows * cols} cells selected`;
+  m2RefreshGrid();
+});
+
+// Clear selection
+$('clearSelBtn')?.addEventListener('click', () => {
+  m2Selection = new Set();
+  m2RefreshGrid();
+});
+
+// Exit copy mode
+$('exitCopyBtn')?.addEventListener('click', () => m2ExitCopyMode());
+
+// Back from paste mode
+$('cancelPasteBtn')?.addEventListener('click', () => {
+  m2PasteMode = false;
+  $('copyBtnRow').style.display = '';
+  $('pasteBtnRow').style.display = 'none';
+  $('copyInstruction') && ($('copyInstruction').innerHTML = 'Tap a cell or drag to select a range, then press <strong>Copy sel</strong>');
+  m2RefreshGrid();
+});
+
+// Paste on cell click (capturing)
+document.addEventListener('click', e => {
+  if (!m2PasteMode || !m2Clipboard) return;
+  const btn = e.target.closest('#beatGridM2 button, #sessionBeatGrid button');
+  if (!btn) return;
+  const destR = +btn.dataset.row, destC = +btn.dataset.col;
+  m2SaveHistory();
+  m2Clipboard.forEach((row, dr) => {
+    row.forEach((val, dc) => {
+      const r = destR+dr, c = destC+dc;
+      if (val !== null && r < M2_ROWS && c < m2TotalCols()) m2Pattern[r][c] = val;
+    });
+  });
+  m2.pattern = m2Pattern.map(r => [...r]);
+  m2Selection = new Set();
+  m2PasteMode = false;
+  $('copyBtnRow').style.display = '';
+  $('pasteBtnRow').style.display = 'none';
+  $('copyInstruction') && ($('copyInstruction').innerHTML = 'Tap a cell or drag to select a range, then press <strong>Copy sel</strong>');
+  m2RefreshGrid();
+  m2UpdateToolbar();
+  showToast('Pasted', 'info');
+}, true);
+
+// Clear grid
+$('m2ClearBtn')?.addEventListener('click', () => {
+  m2SaveHistory();
+  m2Pattern = Array.from({length: M2_ROWS}, () => Array(m2TotalCols()).fill(false));
+  m2Selection = new Set();
+  m2.pattern = m2Pattern.map(r => [...r]);
+  m2RefreshGrid();
+  m2UpdateToolbar();
+});
+
+// Test
+$('m2TestBtn')?.addEventListener('click', () => {
+  if (metro.running) { metro.stop(); return; }
+  setupM2Visual();
+  m2.configure({
+    pattern: m2Pattern.map(r => [...r]),
+    subdivPerBeat: m2Subdiv, numMeasures: m2Measures,
+    timeSig: m2TimeSig,
+    refBeat: $('m2RefBeat')?.checked ?? false, refTonePreset: 0,
+  });
+  metro.start({ bpm: m2Bpm, beatsPerBar: m2TimeSig, subCount: m2Subdiv });
+  if (audio._master && audio._ctx)
+    audio._master.gain.setValueAtTime(1, audio._ctx.currentTime);
+});
+
+// Undo
+$('m2UndoBtn')?.addEventListener('click', () => {
+  if (m2HistoryIdx <= 0) return;
+  m2HistoryIdx--;
+  m2Pattern = m2History[m2HistoryIdx].map(r => [...r]);
+  m2.pattern = m2Pattern.map(r => [...r]);
+  m2RefreshGrid(); m2UpdateToolbar();
+});
+
+// Redo
+$('m2RedoBtn')?.addEventListener('click', () => {
+  if (m2HistoryIdx >= m2History.length-1) return;
+  m2HistoryIdx++;
+  m2Pattern = m2History[m2HistoryIdx].map(r => [...r]);
+  m2.pattern = m2Pattern.map(r => [...r]);
+  m2RefreshGrid(); m2UpdateToolbar();
+});
+
+function m2UpdateToolbar() {
+  const undo = $('m2UndoBtn'), redo = $('m2RedoBtn');
+  const test = $('m2TestBtn'), clear = $('m2ClearBtn');
+  if (undo)  undo.disabled  = m2HistoryIdx <= 0;
+  if (redo)  redo.disabled  = m2HistoryIdx >= m2History.length-1;
+  if (test)  test.disabled  = false;
+  if (clear) clear.disabled = false;
+}
+
+// Hide copy toolbar initially
+if ($('copyToolbar')) $('copyToolbar').style.display = 'none';
+
+// Save initial state
+m2SaveHistory();
+m2UpdateToolbar();
+
+// Controls
+let m2SpeedMode = 'fixed';
+syncSlider('m2FixedBpm',     'm2FixedBpmBox',     v => { m2Bpm = v; });
+syncSlider('m2Rounds',       'm2RoundsBox',        () => {});
+['m2DurMins','m2DurSecs'].forEach(id => $(id)?.addEventListener('change', () => {}));
+syncSlider('m2RestDur',      'm2RestDurBox',       () => {});
+syncSlider('m2StartBpm',     'm2StartBpmBox',      () => {});
+syncSlider('m2EndBpm',       'm2EndBpmBox',        () => {});
+syncSlider('m2StepSize',     'm2StepSizeBox',      () => {});
+syncSlider('m2RampRestDur',  'm2RampRestDurBox',   () => {});
+syncSlider('m2RampRestBars', 'm2RampRestBarsBox', () => {});
+
+$('m2RestEnabled')?.addEventListener('change', e => {
+  const row = $('m2RestRow');
+  if (row) row.style.display = e.target.checked ? '' : 'none';
+});
+
+$('m2RampRestEnabled')?.addEventListener('change', e => {
+  const row = $('m2RampRestRow');
+  if (row) row.style.display = e.target.checked ? '' : 'none';
+});
+
+// M2 step duration helpers
+function getM2DurMins() {
+  const mins = parseInt($('m2DurMins')?.value) || 0;
+  const secs = parseInt($('m2DurSecs')?.value) || 0;
+  return Math.max(1/60, (mins * 60 + secs) / 60);
+}
+
+function getM2StepDurMins() {
+  const mins = parseInt($('m2StepDurMins')?.value) || 0;
+  const secs = parseInt($('m2StepDurSecs')?.value) || 0;
+  return Math.max(1/60, (mins * 60 + secs) / 60);
+}
+
+// M2 ramp time/bars toggle
+$('m2RampModePills')?.addEventListener('click', e => {
+  const p = e.target.closest('[data-rmode]'); if (!p) return;
+  const mode = p.dataset.rmode;
+  $('m2RampModePills').querySelectorAll('[data-rmode]').forEach(x =>
+    x.classList.toggle('sel', x.dataset.rmode === mode));
+  const durRow  = $('m2StepDurRow'),    barsRow = $('m2StepBarsRow');
+  const rDurRow = $('m2RampRestDurRow'), rBarsRow = $('m2RampRestBarsRow');
+  if (durRow)   durRow.style.display   = mode === 'time' ? '' : 'none';
+  if (barsRow)  barsRow.style.display  = mode === 'bars' ? '' : 'none';
+  if (rDurRow)  rDurRow.style.display  = mode === 'time' ? '' : 'none';
+  if (rBarsRow) rBarsRow.style.display = mode === 'bars' ? '' : 'none';
+});
+
+syncSlider('m2StepBars', 'm2StepBarsBox', () => {});
+['m2StepDurMins','m2StepDurSecs'].forEach(id => $(id)?.addEventListener('change', () => {}));
+
+// Mode toggle
+$('m2ModeRow')?.addEventListener('click', e => {
+  const btn = e.target.closest('.mode-btn[data-mode]'); if (!btn) return;
+  const mode = btn.dataset.mode;
+  m2SpeedMode = mode;
+  $('m2ModeRow').querySelectorAll('.mode-btn').forEach(b => b.classList.toggle('active', b===btn));
+  const fr = $('m2FixedRow'), fdr = $('m2FixedDurRow'), ro = $('m2RampOpts');
+  if (fr)  fr.style.display  = mode==='fixed' ? '' : 'none';
+  if (fdr) fdr.style.display = mode==='fixed' ? '' : 'none';
+  if (ro)  ro.classList.toggle('hidden', mode!=='ramp');
+});
+
+// Tap tempo for M2
+setupTap('tapBtn2',       'tapBpm2',       'm2FixedBpm',  'm2FixedBpmBox',  v => { m2Bpm = v; });
+setupTap('tapBtnM2Start', 'tapBpmM2Start', 'm2StartBpm',  'm2StartBpmBox',  () => {});
+setupTap('tapBtnM2End',   'tapBpmM2End',   'm2EndBpm',    'm2EndBpmBox',    () => {});
+
+// Build M2 steps
+function buildM2FixedSteps() {
+  const rounds    = +($('m2Rounds')?.value) || 1;
+  const restOn    = $('m2RestEnabled')?.checked ?? false;
+  const restDur   = (parseInt($('m2RestDurBox')?.value) || 30) / 60;
+  const restClick = $('m2RestClick')?.checked ?? false;
+  const dur       = getM2DurMins();
+  const steps = [];
+  for (let r=0; r<rounds; r++) {
+    steps.push({ bpm: m2Bpm, dur, isBarMode: false, label: m2Bpm + ' BPM' });
+    if (restOn)
+      steps.push({ bpm: m2Bpm, dur: restDur, isRest: true, restClick, label: 'Rest' });
+  }
+  return steps;
+}
+
+function buildM2RampSteps() {
+  const s    = Math.max(1, parseInt($('m2StartBpmBox')?.value) || 80);
+  const e    = Math.max(1, parseInt($('m2EndBpmBox')?.value)   || 120);
+  const sz   = Math.max(1, parseInt($('m2StepSizeBox')?.value) || 1);
+  const dir  = e >= s ? 1 : -1;
+  const isBarMode = getPill('m2RampModePills', 'data-rmode') === 'bars';
+  const dur  = isBarMode ? 999 : getM2StepDurMins();
+  const bars = isBarMode ? (parseInt($('m2StepBarsBox')?.value) || 4) : 0;
+  const restOn    = $('m2RampRestEnabled')?.checked ?? false;
+  const restBars  = isBarMode ? (parseInt($('m2RampRestBarsBox')?.value) || 2) : 0;
+  const restDur   = isBarMode ? 999 : (parseInt($('m2RampRestDurBox')?.value) || 30) / 60;
+  const restClick = $('m2RampRestClick')?.checked ?? false;
+  const steps = [];
+  let cur = s;
+  while (dir===1 ? cur<=e : cur>=e) {
+    steps.push({ bpm:cur, dur, bars, isBarMode, label: cur+' BPM' });
+    if (restOn) steps.push({ bpm:cur, dur:restDur, bars:restBars, isBarMode, isRest:true, restClick, label:'Rest' });
+    cur += dir * sz;
+  }
+  return steps;
+}
+
+$('timeSigPills')?.addEventListener('click', e => {
+  const p = e.target.closest('[data-ts]'); if (!p) return;
+  m2TimeSig = +p.dataset.ts;
+  $('timeSigPills').querySelectorAll('[data-ts]').forEach(x =>
+    x.classList.toggle('sel', +x.dataset.ts === m2TimeSig));
+  buildM2Grid();
+});
+
+$('subdivPills')?.addEventListener('click', e => {
+  const p = e.target.closest('[data-sub]'); if (!p) return;
+  m2Subdiv = +p.dataset.sub;
+  $('subdivPills').querySelectorAll('[data-sub]').forEach(x =>
+    x.classList.toggle('sel', +x.dataset.sub === m2Subdiv));
+  buildM2Grid();
+});
+
+$('measuresPills')?.addEventListener('click', e => {
+  const p = e.target.closest('[data-measures]'); if (!p) return;
+  m2Measures = +p.dataset.measures;
+  $('measuresPills').querySelectorAll('[data-measures]').forEach(x =>
+    x.classList.toggle('sel', +x.dataset.measures === m2Measures));
+  buildM2Grid();
+});
+
+$('m2StartBtn')?.addEventListener('click', () => {
+  const countInOn = $('m2CountIn')?.checked ?? false;
+  const steps = m2SpeedMode === 'ramp' ? buildM2RampSteps() : buildM2FixedSteps();
+  const roundSteps  = steps.filter(s => !s.isRest);
+  const totalRounds = roundSteps.length;
+
+  buildM2Grid('sessionBeatGrid');
+  setupM2Visual();
+  m2.configure({
+    pattern: m2Pattern.map(r => [...r]),
+    subdivPerBeat: m2Subdiv,
+    numMeasures: m2Measures,
+    timeSig: m2TimeSig,
+    refBeat: $('m2RefBeat')?.checked ?? false,
+    refTonePreset: 0,
+  });
+
+  // Session callbacks
+  session.onStepChange = (step, idx) => {
+    metro.bpm       = step.bpm;
+    metro.silentBar = step.isRest && !step.restClick;
+    if (step.isBarMode) {
+      metro.barStepMode  = true;
+      metro.barStepSize  = step.bars ?? 4;
+      metro.barStepCount = 0;
+      metro._pendingAdvance = false;
+      _barsPlayed = 0;
+    } else {
+      metro.barStepMode = false;
+    }
+    $('m2LiveBpm').textContent = step.isRest ? 'Rest' : step.bpm;
+    updateActiveStep('m2StepsList', idx);
+    if (idx > 0) {
+      if (step.isRest) {
+        audio.chime([660, 440], 160);
+        showToast('Rest', 'info');
+      } else {
+        const roundIdx = steps.slice(0,idx+1).filter(s => !s.isRest).length;
+        const label = totalRounds > 1 ? ` · Round ${roundIdx}/${totalRounds}` : '';
+        audio.chime([880, 1100], 160);
+        showToast(`${step.bpm} BPM${label}`, 'info');
+      }
+    }
+  };
+
+  session.onComplete = () => {
+    clearInterval(metro._timer); metro._timer = null;
+    metro.running = false;
+    session.stop();
+    audio.chime([523,659,784,1047], 180);
+    showToast('Session complete! 🎉', 'success');
+    setTimeout(() => {
+      metro.stop();
+      $('m2Session').style.display = 'none';
+      $('m2Setup').style.display   = '';
+      _keepWake = false; WakeLock.release();
+    }, 3500);
+  };
+
+  session.onTick = s => {
+    const el = $('m2LiveTime');
+    if (el) el.textContent = formatTime(s);
+  };
+
+  const m2FirstStep = steps[0];
+  metro.start({
+    bpm: m2FirstStep.bpm, beatsPerBar: m2TimeSig, subCount: m2Subdiv, countIn: countInOn,
+    barStepMode: m2FirstStep.isBarMode, barStepSize: m2FirstStep.bars ?? 4,
+  });
+  if (audio._master && audio._ctx)
+    audio._master.gain.setValueAtTime(1, audio._ctx.currentTime);
+
+  // Wire count-in
+  if (!countInOn) {
+    metro.onCountInBeat = null; metro.onCountInEnd = null;
+    session.load(steps); session.start();
+  } else {
+    const ci = $('m2CountInDisplay'), sm = $('m2SessionMain'), cb = $('m2CountInBeat');
+    if (ci) ci.style.display = '';
+    if (sm) sm.style.display = 'none';
+    metro.onCountInBeat = n => { if (cb) cb.textContent = n; };
+    metro.onCountInEnd  = () => {
+      if (ci) ci.style.display = 'none';
+      if (sm) sm.style.display = '';
+      session.load(steps); session.start();
+    };
+  }
+
+  // Build steps list
+  buildStepsList(steps, 'm2StepsList');
+  const prog = $('m2ProgressCard');
+  if (prog) prog.style.display = m2SpeedMode === 'ramp' ? '' : 'none';
+
+  $('m2Setup').style.display   = 'none';
+  $('m2Session').style.display = '';
+  $('m2LiveBpm').textContent   = m2FirstStep.bpm;
+  setPauseBtn(false);
+  _keepWake = true; WakeLock.request();
+});
+
+$('m2PauseBtn')?.addEventListener('click', () => {
+  if (!metro.running) {
+    metro.resume();
+    if (audio._master && audio._ctx)
+      audio._master.gain.setValueAtTime(1, audio._ctx.currentTime);
+    setPauseBtn(false);
+  } else {
+    metro.pause();
+    setPauseBtn(true);
+  }
+});
+
+$('m2StopBtn')?.addEventListener('click', () => {
+  metro.stop();
+  $('m2Session').style.display = 'none';
+  $('m2Setup').style.display   = '';
+  _keepWake = false; WakeLock.release();
+});
+
+buildM2Grid();
+
+// ============================================================
+// SCENES — M1
+// ============================================================
+
+// Capture current M1 config
+function m1GetConfig() {
+  return {
+    speedMode: m1SpeedMode,
+    // Common
+    timeSig: m1TimeSig,
+    tonePreset: m1TonePreset,
+    countIn: $('m1CountIn')?.checked ?? false,
+    // Phase
+    phaseOn,
+    phaseDiv: getPill('subDivTabs', 'data-div') ?? '4',
+    phaseBeat,
+    anchorBars,
+    shiftBars,
+    // Subdivision (fixed mode)
+    subdivNum: m1SubdivNum,
+    // Silent bars
+    silentEnabled: silentOn,
+    silentRandom,
+    playBars,
+    silentBars,
+    // Fixed mode
+    bpm: m1FixedBpm,
+    durationMins: (parseInt($('m1DurMins')?.value) ?? 0),
+    durationSecs: (parseInt($('m1DurSecs')?.value) ?? 0),
+    rounds: parseInt($('m1RoundsBox')?.value) || 1,
+    restEnabled: $('m1RestEnabled')?.checked ?? false,
+    restDur: parseInt($('m1RestDurBox')?.value) || 30,
+    restClick: $('m1RestClick')?.checked ?? false,
+    // Ramp mode
+    startBpm: parseInt($('startBpmBox')?.value) || 80,
+    endBpm: parseInt($('endBpmBox')?.value) || 120,
+    stepSize: parseInt($('stepSizeBox')?.value) || 1,
+    rampMode: getPill('m1RampModePills', 'data-rmode') ?? 'time',
+    stepDurMins: (parseInt($('stepDurMins')?.value) ?? 1),
+    stepDurSecs: (parseInt($('stepDurSecs')?.value) ?? 0),
+    stepBars: parseInt($('stepBarsBox')?.value) || 4,
+    rampRestEnabled: $('m1RampRestEnabled')?.checked ?? false,
+    rampRestDur: parseInt($('m1RampRestDurBox')?.value) || 30,
+    rampRestBars: parseInt($('m1RampRestBarsBox')?.value) || 2,
+    rampRestClick: $('m1RampRestClick')?.checked ?? false,
+  };
+}
+
+// Apply M1 config to UI
+function m1ApplyConfig(c) {
+  // Speed mode
+  m1SpeedMode = c.speedMode ?? 'fixed';
+  $('m1ModeRow')?.querySelectorAll('.mode-btn').forEach(b =>
+    b.classList.toggle('active', b.dataset.mode === m1SpeedMode));
+  const fr = $('m1FixedRow'), fdr = $('m1FixedDurRow'), ro = $('m1RampOpts');
+  if (fr)  fr.style.display  = m1SpeedMode === 'fixed' ? '' : 'none';
+  if (fdr) fdr.style.display = m1SpeedMode === 'fixed' ? '' : 'none';
+  if (ro)  ro.classList.toggle('hidden', m1SpeedMode !== 'ramp');
+
+  // Time sig
+  m1TimeSig = c.timeSig ?? 4;
+  setPill('m1TimeSigPills', 'data-ts', m1TimeSig);
+  buildBeatDots();
+
+  // Tone
+  m1TonePreset = c.tonePreset ?? 0;
+  setPill('m1TonePills', 'data-tone', m1TonePreset);
+  m1.tonePreset = m1TonePreset;
+
+  // Count-in
+  if ($('m1CountIn')) $('m1CountIn').checked = c.countIn ?? false;
+
+  // Phase
+  phaseOn = c.phaseOn ?? false;
+  if ($('phaseEnabled')) $('phaseEnabled').checked = phaseOn;
+  const po = $('phaseOptions'), ss = $('m1SubdivSection');
+  if (po) po.style.display = phaseOn ? '' : 'none';
+  if (ss) ss.style.display = phaseOn ? 'none' : '';
+  if (c.phaseDiv) { setPill('subDivTabs', 'data-div', c.phaseDiv); buildBeatGrid(c.phaseDiv); }
+  phaseBeat = c.phaseBeat ?? 0;
+  anchorBars = c.anchorBars ?? 1;
+  shiftBars  = c.shiftBars  ?? 1;
+  setPill('anchorMeasures', 'data-m', anchorBars);
+  setPill('shiftMeasures',  'data-m', shiftBars);
+
+  // Subdivision
+  m1SubdivNum = c.subdivNum ?? 1;
+  setPill('m1SubdivPills', 'data-subdiv', String(m1SubdivNum));
+
+  // Silent bars
+  silentOn     = c.silentEnabled ?? false;
+  silentRandom = c.silentRandom  ?? false;
+  playBars     = c.playBars      ?? 3;
+  silentBars   = c.silentBars    ?? 1;
+  if ($('m1SilentEnabled'))   $('m1SilentEnabled').checked   = silentOn;
+  if ($('m1SilentOpts'))      $('m1SilentOpts').style.display = silentOn ? '' : 'none';
+  if ($('m1SilentRandom'))    $('m1SilentRandom').checked    = silentRandom;
+  if ($('m1PlayBars'))      { $('m1PlayBars').value     = playBars;     $('m1PlayBarsBox').value    = playBars;   }
+  if ($('m1SilentBars'))    { $('m1SilentBars').value   = silentBars;   $('m1SilentBarsBox').value  = silentBars; }
+
+  // Fixed BPM
+  m1FixedBpm = c.bpm ?? 80;
+  if ($('m1FixedBpm'))    { $('m1FixedBpm').value    = m1FixedBpm; $('m1FixedBpmBox').value = m1FixedBpm; }
+  if ($('m1DurMins'))       $('m1DurMins').value      = c.durationMins ?? 5;
+  if ($('m1DurSecs'))       $('m1DurSecs').value      = c.durationSecs ?? 0;
+  if ($('m1Rounds'))      { $('m1Rounds').value       = c.rounds ?? 1;  $('m1RoundsBox').value    = c.rounds ?? 1; }
+  if ($('m1RestEnabled'))   $('m1RestEnabled').checked = c.restEnabled ?? false;
+  if ($('m1RestRow'))       $('m1RestRow').style.display = c.restEnabled ? '' : 'none';
+  if ($('m1RestDur'))     { $('m1RestDur').value       = c.restDur ?? 30; $('m1RestDurBox').value   = c.restDur ?? 30; }
+  if ($('m1RestClick'))     $('m1RestClick').checked   = c.restClick ?? false;
+
+  // Ramp
+  if ($('startBpm'))    { $('startBpm').value    = c.startBpm ?? 80;  $('startBpmBox').value   = c.startBpm ?? 80;  }
+  if ($('endBpm'))      { $('endBpm').value       = c.endBpm   ?? 120; $('endBpmBox').value     = c.endBpm   ?? 120; }
+  if ($('stepSize'))    { $('stepSize').value     = c.stepSize ?? 1;   $('stepSizeBox').value   = c.stepSize ?? 1;   }
+  if ($('stepDurMins'))   $('stepDurMins').value  = c.stepDurMins ?? 1;
+  if ($('stepDurSecs'))   $('stepDurSecs').value  = c.stepDurSecs ?? 0;
+  if ($('stepBars'))    { $('stepBars').value     = c.stepBars ?? 4;   $('stepBarsBox').value   = c.stepBars ?? 4;   }
+
+  const rmode = c.rampMode ?? 'time';
+  if ($('m1RampModePills')) {
+    setPill('m1RampModePills', 'data-rmode', rmode);
+    const dr = $('m1StepDurRow'), br = $('m1StepBarsRow');
+    if (dr) dr.style.display = rmode === 'time' ? '' : 'none';
+    if (br) br.style.display = rmode === 'bars' ? '' : 'none';
+  }
+
+  if ($('m1RampRestEnabled'))  $('m1RampRestEnabled').checked   = c.rampRestEnabled ?? false;
+  if ($('m1RampRestRow'))      $('m1RampRestRow').style.display = c.rampRestEnabled ? '' : 'none';
+  if ($('m1RampRestDur'))    { $('m1RampRestDur').value    = c.rampRestDur  ?? 30; $('m1RampRestDurBox').value  = c.rampRestDur  ?? 30; }
+  if ($('m1RampRestBars'))   { $('m1RampRestBars').value   = c.rampRestBars ?? 2;  $('m1RampRestBarsBox').value = c.rampRestBars ?? 2;  }
+  if ($('m1RampRestClick'))    $('m1RampRestClick').checked   = c.rampRestClick ?? false;
+}
+
+//  Scene save dialog 
+let _pendingSceneConfig = null;
+let _pendingSceneMode   = null;
+
+function openSaveDialog(mode, config) {
+  _pendingSceneConfig = config;
+  _pendingSceneMode   = mode;
+  if ($('sceneNameInput')) $('sceneNameInput').value = '';
+  if ($('overwriteHint'))  $('overwriteHint').style.display = 'none';
+  $('saveSceneDialog').style.display = '';
+}
+
+$('m1SaveSceneBtn')?.addEventListener('click', () => openSaveDialog(1, m1GetConfig()));
+
+$('saveDialogCloseBtn')?.addEventListener('click',  () => $('saveSceneDialog').style.display = 'none');
+$('saveDialogCancelBtn')?.addEventListener('click', () => $('saveSceneDialog').style.display = 'none');
+
+$('sceneNameInput')?.addEventListener('input', () => {
+  const name = $('sceneNameInput').value.trim();
+  const exists = name && scenes.load(name, _pendingSceneMode);
+  if ($('overwriteHint')) $('overwriteHint').style.display = exists ? '' : 'none';
+});
+
+$('saveDialogConfirmBtn')?.addEventListener('click', () => {
+  const name = $('sceneNameInput')?.value.trim();
+  if (!name) return;
+  scenes.save(name, _pendingSceneMode, _pendingSceneConfig);
+  $('saveSceneDialog').style.display = 'none';
+  showToast(`Scene "${name}" saved`, 'success');
+  renderScenesList(_pendingSceneMode);
+});
+
+//  Scenes modal 
+let _activeSceneTab = 1;
+
+$('scenesOpenBtn')?.addEventListener('click', () => {
+  $('scenesModal').style.display = '';
+  renderScenesList(_activeSceneTab);
+});
+
+$('scenesCloseBtn')?.addEventListener('click', () => $('scenesModal').style.display = 'none');
+
+$('scenesModal')?.addEventListener('click', e => {
+  const tab = e.target.closest('[data-stab]');
+  if (tab) {
+    _activeSceneTab = +tab.dataset.stab;
+    $('scenesModal').querySelectorAll('[data-stab]').forEach(t =>
+      t.classList.toggle('active', +t.dataset.stab === _activeSceneTab));
+    renderScenesList(_activeSceneTab);
+  }
+});
+
+function renderScenesList(mode) {
+  const list  = $('scenesList');
+  const empty = $('scenesEmpty');
+  if (!list) return;
+  const sceneList = scenes.list(mode);
+  if (sceneList.length === 0) {
+    list.innerHTML = '';
+    if (empty) empty.style.display = '';
+    return;
+  }
+  if (empty) empty.style.display = 'none';
+  list.innerHTML = sceneList.map((s, i) => `
+    <div class="scene-card">
+      <div class="scene-card-header">
+        <span class="scene-card-name">${s.name}</span>
+        <span style="font-size:11px;color:var(--text3);">${new Date(s.savedAt).toLocaleDateString()}</span>
+      </div>
+      <div style="display:flex;gap:6px;padding:0 14px 10px;flex-wrap:wrap;">
+        <button class="btn sm wide" data-scene-load="${i}">Load</button>
+        <button class="btn sm wide" data-scene-update="${i}">Update</button>
+        <button class="btn sm wide" data-scene-export="${i}">Export</button>
+        <button class="btn sm wide" data-scene-delete="${i}" style="color:var(--red,#e85d5d);">Delete</button>
+      </div>
+
+      <div data-delete-confirm="${i}" style="display:none;padding:0 14px 12px;">
+        <div style="font-size:13px;color:var(--text2);margin-bottom:8px;">Delete "${s.name}"?</div>
+        <div style="display:flex;gap:8px;">
+          <button class="btn sm wide" data-delete-yes="${i}" style="color:var(--red,#e85d5d);">Yes, delete</button>
+          <button class="btn sm wide" data-delete-no="${i}">Cancel</button>
+        </div>
+      </div>
+    </div>`).join('');
+
+  // Load
+  list.querySelectorAll('[data-scene-load]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const scene = sceneList[+btn.dataset.sceneLoad];
+      if (mode === 1) m1ApplyConfig(scene.config);
+      else if (mode === 2) m2ApplyConfig(scene.config);
+      $('scenesModal').style.display = 'none';
+      showToast(`Loaded "${scene.name}"`, 'success');
+    });
+  });
+
+  // Update — overwrite with current config
+  list.querySelectorAll('[data-scene-update]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const scene = sceneList[+btn.dataset.sceneUpdate];
+      const config = mode === 1 ? m1GetConfig() : mode === 2 ? m2GetConfig() : null;
+      if (!config) return;
+      scenes.save(scene.name, mode, config);
+      showToast(`Updated "${scene.name}"`, 'success');
+      renderScenesList(mode);
+    });
+  });
+
+  // Export — download file
+  list.querySelectorAll('[data-scene-export]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const scene    = sceneList[+btn.dataset.sceneExport];
+      const json     = scenes.export(scene.name, mode) ?? '';
+      const modeName = ['','M1','M2','M3'][mode] || 'M1';
+      const filename = modeName + '-' + scene.name.replace(/[^a-z0-9]/gi, '-') + '.json';
+      const blob = new Blob([json], { type: 'application/json' });
+      const a    = document.createElement('a');
+      a.href     = URL.createObjectURL(blob);
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(a.href), 10000);
+    });
+  });
+
+  // Delete — show inline confirm
+  list.querySelectorAll('[data-scene-delete]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const i    = +btn.dataset.sceneDelete;
+      const conf = list.querySelector(`[data-delete-confirm="${i}"]`);
+      if (conf) conf.style.display = '';
+    });
+  });
+  list.querySelectorAll('[data-delete-yes]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const scene = sceneList[+btn.dataset.deleteYes];
+      scenes.delete(scene.name, mode);
+      renderScenesList(mode);
+    });
+  });
+  list.querySelectorAll('[data-delete-no]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const i    = +btn.dataset.deleteNo;
+      const conf = list.querySelector(`[data-delete-confirm="${i}"]`);
+      if (conf) conf.style.display = 'none';
+    });
+  });
+}
+
+// Export All
+$('scenesExportAllBtn')?.addEventListener('click', () => {
+  const all  = scenes.list(null);
+  if (all.length === 0) { showToast('No scenes to export', 'info'); return; }
+  const json = JSON.stringify(all, null, 2);
+  const blob = new Blob([json], { type: 'application/json' });
+  const a    = document.createElement('a');
+  a.href     = URL.createObjectURL(blob);
+  a.download = 'metronomix-scenes.json';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(a.href), 10000);
+});
+
+
+// ============================================================
+// SCENES — M2
+// ============================================================
+
+function m2GetConfig() {
+  return {
+    speedMode: m2SpeedMode,
+    timeSig: m2TimeSig, subdiv: m2Subdiv, measures: m2Measures,
+    pattern: m2Pattern.map(r => [...r]),
+    bpm: m2Bpm,
+    durationMins: (parseInt($('m2DurMins')?.value) ?? 5),
+    durationSecs: (parseInt($('m2DurSecs')?.value) ?? 0),
+    rounds: parseInt($('m2RoundsBox')?.value) || 1,
+    restEnabled: $('m2RestEnabled')?.checked ?? false,
+    restDur: parseInt($('m2RestDurBox')?.value) || 30,
+    restClick: $('m2RestClick')?.checked ?? false,
+    startBpm: parseInt($('m2StartBpmBox')?.value) || 80,
+    endBpm: parseInt($('m2EndBpmBox')?.value) || 120,
+    stepSize: parseInt($('m2StepSizeBox')?.value) || 1,
+    rampMode: getPill('m2RampModePills', 'data-rmode') ?? 'time',
+    stepDurMins: (parseInt($('m2StepDurMins')?.value) ?? 1),
+    stepDurSecs: (parseInt($('m2StepDurSecs')?.value) ?? 0),
+    stepBars: parseInt($('m2StepBarsBox')?.value) || 4,
+    rampRestEnabled: $('m2RampRestEnabled')?.checked ?? false,
+    rampRestDur: parseInt($('m2RampRestDurBox')?.value) || 30,
+    rampRestClick: $('m2RampRestClick')?.checked ?? false,
+    countIn: $('m2CountIn')?.checked ?? false,
+    refBeat: $('m2RefBeat')?.checked ?? false,
+  };
+}
+
+function m2ApplyConfig(c) {
+  m2SpeedMode = c.speedMode ?? 'fixed';
+  $('m2ModeRow')?.querySelectorAll('.mode-btn').forEach(b =>
+    b.classList.toggle('active', b.dataset.mode === m2SpeedMode));
+  const fr=$('m2FixedRow'), fdr=$('m2FixedDurRow'), ro=$('m2RampOpts');
+  if (fr)  fr.style.display  = m2SpeedMode==='fixed' ? '' : 'none';
+  if (fdr) fdr.style.display = m2SpeedMode==='fixed' ? '' : 'none';
+  if (ro)  ro.classList.toggle('hidden', m2SpeedMode!=='ramp');
+
+  m2TimeSig=c.timeSig??4; m2Subdiv=c.subdiv??1; m2Measures=c.measures??1;
+  setPill('timeSigPills',  'data-ts',       m2TimeSig);
+  setPill('subdivPills',   'data-sub',      m2Subdiv);
+  setPill('measuresPills', 'data-measures', m2Measures);
+  if (c.pattern) m2Pattern = c.pattern.map(r => [...r]);
+  buildM2Grid();
+
+  m2Bpm = c.bpm ?? 80;
+  if ($('m2FixedBpm'))  { $('m2FixedBpm').value  = m2Bpm; $('m2FixedBpmBox').value = m2Bpm; }
+  if ($('m2DurMins')) $('m2DurMins').value = c.durationMins ?? 5;
+  if ($('m2DurSecs')) $('m2DurSecs').value = c.durationSecs ?? 0;
+  if ($('m2Rounds'))    { $('m2Rounds').value      = c.rounds??1; $('m2RoundsBox').value = c.rounds??1; }
+  if ($('m2RestEnabled'))  $('m2RestEnabled').checked = c.restEnabled??false;
+  if ($('m2RestRow'))      $('m2RestRow').style.display = c.restEnabled ? '' : 'none';
+  if ($('m2RestDur'))   { $('m2RestDur').value     = c.restDur??30; $('m2RestDurBox').value = c.restDur??30; }
+  if ($('m2RestClick'))    $('m2RestClick').checked = c.restClick??false;
+
+  if ($('m2StartBpm')) { $('m2StartBpm').value = c.startBpm??80; $('m2StartBpmBox').value = c.startBpm??80; }
+  if ($('m2EndBpm'))   { $('m2EndBpm').value   = c.endBpm??120;  $('m2EndBpmBox').value   = c.endBpm??120; }
+  if ($('m2StepSize')) { $('m2StepSize').value  = c.stepSize??1;  $('m2StepSizeBox').value = c.stepSize??1; }
+  if ($('m2StepDurMins')) $('m2StepDurMins').value = c.stepDurMins??1;
+  if ($('m2StepDurSecs')) $('m2StepDurSecs').value = c.stepDurSecs??0;
+  if ($('m2StepBars')) { $('m2StepBars').value  = c.stepBars??4; $('m2StepBarsBox').value = c.stepBars??4; }
+
+  const rmode = c.rampMode ?? 'time';
+  setPill('m2RampModePills', 'data-rmode', rmode);
+  const dr=$('m2StepDurRow'), br=$('m2StepBarsRow');
+  if (dr) dr.style.display = rmode==='time' ? '' : 'none';
+  if (br) br.style.display = rmode==='bars' ? '' : 'none';
+
+  if ($('m2RampRestEnabled')) $('m2RampRestEnabled').checked = c.rampRestEnabled??false;
+  if ($('m2RampRestRow'))     $('m2RampRestRow').style.display = c.rampRestEnabled ? '' : 'none';
+  if ($('m2RampRestDur'))   { $('m2RampRestDur').value = c.rampRestDur??30; $('m2RampRestDurBox').value = c.rampRestDur??30; }
+  if ($('m2RampRestClick'))   $('m2RampRestClick').checked = c.rampRestClick??false;
+
+  if ($('m2CountIn')) $('m2CountIn').checked = c.countIn??false;
+  if ($('m2RefBeat')) {
+    $('m2RefBeat').checked = c.refBeat??false;
+    const opts = $('m2RefBeatOpts');
+    if (opts) opts.style.display = c.refBeat ? '' : 'none';
+  }
+  if (c.refTonePreset !== undefined) setPill('m2RefBeatTonePills', 'data-tone', c.refTonePreset);
+}
+
+$('m2SaveSceneBtn')?.addEventListener('click', () => openSaveDialog(2, m2GetConfig()));
+
+// Import (single scene or array of scenes)
+$('scenesImportBtn')?.addEventListener('click', () => $('scenesImportFile')?.click());
+$('scenesImportFile')?.addEventListener('change', e => {
+  const file = e.target.files[0]; if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    try {
+      const parsed = JSON.parse(ev.target.result);
+      const list   = Array.isArray(parsed) ? parsed : [parsed];
+      let count = 0;
+      list.forEach(scene => {
+        if (scene.name && scene.mode !== undefined) {
+          scenes.save(scene.name, scene.mode, scene.config);
+          count++;
+        }
+      });
+      showToast(`Imported ${count} scene${count !== 1 ? 's' : ''}`, 'success');
+      renderScenesList(_activeSceneTab);
+    } catch { showToast('Invalid scene file', 'info'); }
+  };
+  reader.readAsText(file);
+  e.target.value = '';
+});
+
+// ============================================================
+// BLUETOOTH LATENCY
+// ============================================================
+
+function btRenderDevices() {
+  const list = $('btDevicesList'); if (!list) return;
+  let devices = [];
+  try { devices = latency.listDevices(); } catch(e) { console.error('BT devices load failed:', e); }
+  if (devices.length === 0) {
+    list.innerHTML = '<div style="font-size:13px;color:var(--text3);padding:8px 0;">No saved devices</div>';
+    return;
+  }
+  list.innerHTML = devices.map((d, i) => `
+    <div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:0.5px solid var(--border);">
+      <span style="flex:1;font-size:14px;color:var(--text1);">${d.name}</span>
+      <span style="font-size:12px;color:var(--text3);">${d.delay}ms</span>
+      <button class="btn sm" data-bt-load="${i}">Load</button>
+      <button class="btn sm" data-bt-delete="${i}" style="color:var(--red,#e85d5d);">✕</button>
+    </div>`).join('');
+
+  list.querySelectorAll('[data-bt-load]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const d = devices[+btn.dataset.btLoad];
+      latency.loadDevice(d.name);
+      const ms = latency.delay;
+      $('btDelaySlider').value = ms;
+      $('btDelayBox').value    = ms;
+      showToast(`Loaded "${d.name}" — ${ms}ms`, 'success');
+    });
+  });
+
+  list.querySelectorAll('[data-bt-delete]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const d = devices[+btn.dataset.btDelete];
+      latency.deleteDevice(d.name);
+      btRenderDevices();
+    });
+  });
+}
+
+// Open
+function btOpen() {
+  $('btModal').style.display = 'flex';
+  $('btDelaySlider').value = latency.delay;
+  $('btDelayBox').value    = latency.delay;
+  btRenderDevices();
+}
+$('btOpenBtn')?.addEventListener('click', btOpen);
+
+// Close
+$('btCloseBtn')?.addEventListener('click', () => { btStopTest(); $('btModal').style.display = 'none'; });
+
+// Slider sync
+syncSlider('btDelaySlider', 'btDelayBox', ms => latency.setDelay(ms));
+
+// Save device
+$('btSaveDevice')?.addEventListener('click', () => {
+  const name = $('btDeviceName')?.value.trim();
+  if (!name) return;
+  latency.saveDevice(name);
+  $('btDeviceName').value = '';
+  btRenderDevices();
+  showToast('Saved "' + name + '"', 'success');
+});
+
+// Test — play a click at the current delay
+let _btTestRunning = false;
+let _btTestBeat = 0;
+
+function btStopTest() {
+  if (!_btTestRunning) return;
+  _btTestRunning = false;
+  metro.stop();
+  metro.onBeat = null;
+  const vis = $('btTestVisual');
+  if (vis) vis.style.display = 'none';
+  const btn = $('btTestBtn');
+  if (btn) { btn.textContent = '▶ Test'; btn.classList.remove('active'); }
+  // Reset dots
+  const dots = document.querySelectorAll('#btBeatDots .bt-dot');
+  dots.forEach(d => d.style.background = 'var(--bg3)');
+}
+
+$('btTestBtn')?.addEventListener('click', () => {
+  if (_btTestRunning) { btStopTest(); return; }
+  try {
+    const ctx = audio.getCtx();
+    ctx.resume();
+
+    const bpm = m1FixedBpm || 80;
+    const timeSig = m1TimeSig || 4;
+
+    // Show visual
+    const vis = $('btTestVisual'); if (vis) vis.style.display = '';
+    const btn = $('btTestBtn');
+    if (btn) { btn.textContent = '■ Stop'; btn.classList.add('active'); }
+
+    // Resize dots to match time sig
+    const dotsWrap = $('btBeatDots');
+    if (dotsWrap) {
+      dotsWrap.innerHTML = Array.from({length: timeSig}, (_, i) =>
+        `<div style="width:20px;height:20px;border-radius:50%;background:var(--bg3);transition:background 0.05s;" class="bt-dot"></div>`
+      ).join('');
+    }
+
+    _btTestRunning = true;
+    _btTestBeat = 0;
+
+    // Direct onBeat: audio + visual
+    metro.onBeat = (t, beat, isDown) => {
+      // Audio click
+      const ctx = audio.getCtx();
+      if (audio._master) audio._master.gain.setValueAtTime(1, ctx.currentTime);
+      const freq = (beat === 0) ? TONE_PRESETS[m1TonePreset]?.downFreq ?? 880
+                                : TONE_PRESETS[m1TonePreset]?.upFreq   ?? 440;
+      audio._osc(ctx, t, freq, 0.5, 0.04, 'sine');
+      // Visual with delay
+      const beatIdx = beat % timeSig;
+      const delay = latency.delay;
+      setTimeout(() => {
+        if (!_btTestRunning) return;
+        const dots = document.querySelectorAll('#btBeatDots .bt-dot');
+        dots.forEach((d, i) => {
+          d.style.background = i === beatIdx
+            ? (beatIdx === 0 ? 'var(--accent)' : 'var(--text2)')
+            : 'var(--bg3)';
+        });
+      }, delay);
+    };
+
+    metro.start({ bpm, beatsPerBar: timeSig, subCount: 1, countIn: false });
+
+  } catch(e) { showToast('Error: ' + e.message, 'info'); }
+});
+</script>
 </html>
