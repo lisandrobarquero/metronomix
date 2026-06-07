@@ -817,7 +817,7 @@ input[type=range]::-moz-range-thumb { width: 26px; height: 26px; border-radius: 
 // Engine layer: zero DOM references, portable to any platform
 // ============================================================
 
-try { try { try { try { try { try { try { try { try { try { try { try { try { try { try { try { try { if (navigator.audioSession) navigator.audioSession.type = 'playback'; } catch(e) { /* not supported */ } } catch(e) {} } catch(e) {} } catch(e) {} } catch(e) {} } catch(e) {} } catch(e) {} } catch(e) {} } catch(e) {} } catch(e) {} } catch(e) {} } catch(e) {} } catch(e) {} } catch(e) {} } catch(e) {} } catch(e) {} } catch(e) {}
+try { try { try { try { try { try { try { try { try { try { try { try { try { try { try { try { try { try { try { if (navigator.audioSession) navigator.audioSession.type = 'playback'; } catch(e) { /* not supported */ } } catch(e) { /* not supported */ } } catch(e) { /* not supported */ } } catch(e) {} } catch(e) {} } catch(e) {} } catch(e) {} } catch(e) {} } catch(e) {} } catch(e) {} } catch(e) {} } catch(e) {} } catch(e) {} } catch(e) {} } catch(e) {} } catch(e) {} } catch(e) {} } catch(e) {} } catch(e) {}
 
 // ── Wake Lock ────────────────────────────────────────────────
 let _wakeLock = null;
@@ -2398,6 +2398,8 @@ function m2HandleMouseEnter(e, r, c, btn) {
 
 function m2HandleClick(e, r, c, btn) {
   if (m2PasteMode) return; // handled by document capturing
+  // Block grid edits during active session
+  if ($('m2Session') && $('m2Session').style.display !== 'none') return;
   if (m2CopyMode) {
     m2IsDragging = false;
     if (m2DidDrag) { m2DidDrag = false; return; }
@@ -2780,12 +2782,17 @@ $('m2StartBtn')?.addEventListener('click', () => {
 
 $('m2PauseBtn')?.addEventListener('click', () => {
   if (!metro.running) {
-    metro.resume();
+    const countInOn = $('m2CountIn')?.checked ?? false;
+    // Reset grid position to start of bar so audio and visual stay in sync
+    m2._gridBeat = 0;
+    metro.resume(countInOn);
+    if (!countInOn) session.resumeStep();
     if (audio._master && audio._ctx)
       audio._master.gain.setValueAtTime(1, audio._ctx.currentTime);
     setPauseBtn(false);
   } else {
     metro.pause();
+    session.stop();
     setPauseBtn(true);
   }
 });
