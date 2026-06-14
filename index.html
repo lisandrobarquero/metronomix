@@ -817,7 +817,7 @@ input[type=range]::-moz-range-thumb { width: 26px; height: 26px; border-radius: 
 // Engine layer: zero DOM references, portable to any platform
 // ============================================================
 
-try { try { try { try { try { try { try { try { try { try { try { try { try { try { try { try { try { try { try { if (navigator.audioSession) navigator.audioSession.type = 'playback'; } catch(e) { /* not supported */ } } catch(e) { /* not supported */ } } catch(e) { /* not supported */ } } catch(e) {} } catch(e) {} } catch(e) {} } catch(e) {} } catch(e) {} } catch(e) {} } catch(e) {} } catch(e) {} } catch(e) {} } catch(e) {} } catch(e) {} } catch(e) {} } catch(e) {} } catch(e) {} } catch(e) {} } catch(e) {}
+try { try { try { try { try { try { try { try { try { try { try { try { try { try { try { try { try { try { try { try { try { try { try { if (navigator.audioSession) navigator.audioSession.type = 'playback'; } catch(e) { /* not supported */ } } catch(e) { /* not supported */ } } catch(e) { /* not supported */ } } catch(e) { /* not supported */ } } catch(e) { /* not supported */ } } catch(e) { /* not supported */ } } catch(e) { /* not supported */ } } catch(e) {} } catch(e) {} } catch(e) {} } catch(e) {} } catch(e) {} } catch(e) {} } catch(e) {} } catch(e) {} } catch(e) {} } catch(e) {} } catch(e) {} } catch(e) {} } catch(e) {} } catch(e) {} } catch(e) {} } catch(e) {}
 
 // ── Wake Lock ────────────────────────────────────────────────
 let _wakeLock = null;
@@ -1289,22 +1289,25 @@ class M2Mode {
   _onBeat(time, beat, isDownbeat, isBeatOne) {
     const col = this._gridBeat % this.totalCols;
 
-    // Play pattern hits
-    for (let row = 0; row < 5; row++) {
-      if (this.pattern[row]?.[col]) {
-        const vol = [0.8, 0.7, 0.65, 0.7, 0.75][row];
-        this.engine.audio.playTone(time, TONE_FREQS[row], vol);
+    // Silent during rest (when restClick is off)
+    if (!this.engine.silentBar) {
+      // Play pattern hits
+      for (let row = 0; row < 5; row++) {
+        if (this.pattern[row]?.[col]) {
+          const vol = [0.8, 0.7, 0.65, 0.7, 0.75][row];
+          this.engine.audio.playTone(time, TONE_FREQS[row], vol);
+        }
+      }
+
+      // Reference beat — plays on every beat regardless of pattern
+      if (this.refBeat && isBeatOne) {
+        const preset = TONE_PRESETS[this.refTonePreset];
+        this.engine.audio.playClick(time, isDownbeat ? 'accent' : 'beat', preset);
       }
     }
 
-    // Reference beat — plays on every beat regardless of pattern
-    if (this.refBeat && isBeatOne) {
-      const preset = TONE_PRESETS[this.refTonePreset];
-      this.engine.audio.playClick(time, isDownbeat ? 'accent' : 'beat', preset);
-    }
-
-    // Visual callback — same timing as audio
-    if (this.onGridBeat) {
+    // Visual callback — only when not silent
+    if (!this.engine.silentBar && this.onGridBeat) {
       const snap = { col, total: this.totalCols };
       const gen  = this.engine._gen;
       VisualTimer.set(() => {
@@ -2701,6 +2704,20 @@ $('m2StartBtn')?.addEventListener('click', () => {
   session.onStepChange = (step, idx) => {
     metro.bpm       = step.bpm;
     metro.silentBar = step.isRest && !step.restClick;
+
+    // Master gain: cut immediately to kill pre-scheduled clicks
+    if (audio._master && audio._ctx) {
+      const gain = step.isRest && !step.restClick ? 0 : 1;
+      audio._master.gain.cancelScheduledValues(audio._ctx.currentTime);
+      audio._master.gain.setValueAtTime(gain, audio._ctx.currentTime);
+    }
+
+    // When leaving rest: restart from beat 1 (not on initial step — metro.start() already handles that)
+    if (!step.isRest && idx > 0) {
+      metro.beat     = 0;
+      m2._gridBeat   = 0;
+    }
+
     if (step.isBarMode) {
       metro.barStepMode  = true;
       metro.barStepSize  = step.bars ?? 4;
@@ -2724,6 +2741,7 @@ $('m2StartBtn')?.addEventListener('click', () => {
       }
     }
   };
+
 
   session.onComplete = () => {
     clearInterval(metro._timer); metro._timer = null;
@@ -2799,6 +2817,7 @@ $('m2PauseBtn')?.addEventListener('click', () => {
 
 $('m2StopBtn')?.addEventListener('click', () => {
   metro.stop();
+  session.stop();
   $('m2Session').style.display = 'none';
   $('m2Setup').style.display   = '';
   _keepWake = false; WakeLock.release();
