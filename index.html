@@ -467,6 +467,7 @@ input[type=range]::-moz-range-thumb { width: 26px; height: 26px; border-radius: 
       <div class="session-bpm-lbl">BPM</div>
       <div class="beat-dots" id="beatDots"></div>
       <div class="session-time" id="m1LiveTime">—</div>
+      <div class="session-total-time" id="m1TotalTime" style="font-size:12px;color:var(--text3);text-align:center;margin:-4px 0 8px;"></div>
       <div class="bar-info" id="barInfo" style="font-size:13px;color:var(--green);text-align:center;min-height:18px;margin-bottom:2px;display:none;"></div>
       <div class="round-ind" id="roundInd" style="font-size:13px;color:var(--text3);text-align:center;min-height:18px;margin-bottom:4px;"></div>
       <div class="phase-ind" id="phaseInd"></div>
@@ -707,6 +708,7 @@ input[type=range]::-moz-range-thumb { width: 26px; height: 26px; border-radius: 
       <div class="session-bpm" id="m2LiveBpm">80</div>
       <div class="session-bpm-lbl">BPM</div>
       <div class="session-time" id="m2LiveTime">—</div>
+      <div class="session-total-time" id="m2TotalTime" style="font-size:12px;color:var(--text3);text-align:center;margin:-4px 0 8px;"></div>
       <div class="card" style="margin-bottom:14px;">
         <div class="grid-with-labels">
           <div class="grid-labels-col">
@@ -817,7 +819,7 @@ input[type=range]::-moz-range-thumb { width: 26px; height: 26px; border-radius: 
 // Engine layer: zero DOM references, portable to any platform
 // ============================================================
 
-try { try { try { try { try { try { try { try { try { try { try { try { try { try { try { try { try { if (navigator.audioSession) navigator.audioSession.type = 'playback'; } catch(e) { /* not supported */ } } catch(e) {} } catch(e) {} } catch(e) {} } catch(e) {} } catch(e) {} } catch(e) {} } catch(e) {} } catch(e) {} } catch(e) {} } catch(e) {} } catch(e) {} } catch(e) {} } catch(e) {} } catch(e) {} } catch(e) {} } catch(e) {}
+try { try { try { try { try { try { try { try { try { try { try { try { try { try { try { try { try { try { try { try { try { try { try { try { if (navigator.audioSession) navigator.audioSession.type = 'playback'; } catch(e) { /* not supported */ } } catch(e) { /* not supported */ } } catch(e) { /* not supported */ } } catch(e) { /* not supported */ } } catch(e) { /* not supported */ } } catch(e) { /* not supported */ } } catch(e) { /* not supported */ } } catch(e) { /* not supported */ } } catch(e) {} } catch(e) {} } catch(e) {} } catch(e) {} } catch(e) {} } catch(e) {} } catch(e) {} } catch(e) {} } catch(e) {} } catch(e) {} } catch(e) {} } catch(e) {} } catch(e) {} } catch(e) {} } catch(e) {} } catch(e) {}
 
 // ── Wake Lock ────────────────────────────────────────────────
 let _wakeLock = null;
@@ -1289,22 +1291,25 @@ class M2Mode {
   _onBeat(time, beat, isDownbeat, isBeatOne) {
     const col = this._gridBeat % this.totalCols;
 
-    // Play pattern hits
-    for (let row = 0; row < 5; row++) {
-      if (this.pattern[row]?.[col]) {
-        const vol = [0.8, 0.7, 0.65, 0.7, 0.75][row];
-        this.engine.audio.playTone(time, TONE_FREQS[row], vol);
+    // Silent during rest (when restClick is off)
+    if (!this.engine.silentBar) {
+      // Play pattern hits
+      for (let row = 0; row < 5; row++) {
+        if (this.pattern[row]?.[col]) {
+          const vol = [0.8, 0.7, 0.65, 0.7, 0.75][row];
+          this.engine.audio.playTone(time, TONE_FREQS[row], vol);
+        }
+      }
+
+      // Reference beat — plays on every beat regardless of pattern
+      if (this.refBeat && isBeatOne) {
+        const preset = TONE_PRESETS[this.refTonePreset];
+        this.engine.audio.playClick(time, isDownbeat ? 'accent' : 'beat', preset);
       }
     }
 
-    // Reference beat — plays on every beat regardless of pattern
-    if (this.refBeat && isBeatOne) {
-      const preset = TONE_PRESETS[this.refTonePreset];
-      this.engine.audio.playClick(time, isDownbeat ? 'accent' : 'beat', preset);
-    }
-
-    // Visual callback — same timing as audio
-    if (this.onGridBeat) {
+    // Visual callback — only when not silent
+    if (!this.engine.silentBar && this.onGridBeat) {
       const snap = { col, total: this.totalCols };
       const gen  = this.engine._gen;
       VisualTimer.set(() => {
@@ -1692,6 +1697,46 @@ function formatTime(secs) {
   return m > 0 ? `${m}:${String(s).padStart(2,'0')}` : `0:${String(s).padStart(2,'0')}`;
 }
 
+// ── Stuck-audio watchdog ──────────────────────────────────────
+// iOS Safari occasionally suspends the AudioContext mid-session (screen lock,
+// Bluetooth route change, silent-switch toggle, app backgrounding) without
+// firing a normal 'suspended' state change we can catch elsewhere. When that
+// happens, ctx.currentTime stops advancing and the scheduler appears frozen
+// (often visible as the count-in stuck on beat 1). This watchdog detects a
+// stalled currentTime while the engine thinks it's running, and recovers by
+// recreating the AudioContext and re-anchoring the scheduler.
+let _wdLastCtxTime = null, _wdStallSince = null;
+setInterval(() => {
+  if (!metro.running || !audio._ctx) { _wdLastCtxTime = null; _wdStallSince = null; return; }
+  const t = audio._ctx.currentTime;
+  if (_wdLastCtxTime === null || t !== _wdLastCtxTime) {
+    _wdLastCtxTime = t;
+    _wdStallSince = null;
+    return;
+  }
+  if (_wdStallSince === null) { _wdStallSince = Date.now(); return; }
+  if (Date.now() - _wdStallSince > 2000) {
+    try {
+      audio.close();
+      audio.getCtx();     // recreates + resumes a fresh context
+      metro.nextTime = 0; // re-anchor scheduler to the new context's clock
+      metro._run();
+    } catch (e) { /* best-effort recovery */ }
+    _wdStallSince = null;
+  }
+}, 500);
+
+// Re-resume audio context whenever the app returns to the foreground —
+// iOS can leave it suspended after backgrounding/screen lock.
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible' && audio._ctx && audio._ctx.state === 'suspended') {
+    audio._ctx.resume();
+  }
+});
+window.addEventListener('focus', () => {
+  if (audio._ctx && audio._ctx.state === 'suspended') audio._ctx.resume();
+});
+
 function setPill(containerId, attr, value) {
   const c = $(containerId); if (!c) return;
   c.querySelectorAll(`[${attr}]`).forEach(p =>
@@ -1719,6 +1764,8 @@ let m1SpeedMode  = 'fixed';
 let phaseOn      = false, phaseBeat = 0, anchorBars = 1, shiftBars = 1;
 let silentOn     = false, silentRandom = false, playBars = 3, silentBars = 1;
 let _barsPlayed  = 0;
+let _inSilentRest = false; // true while in a no-click rest — metro fully stopped
+let _isUserPaused = false; // true while user has paused the session
 
 const SUBDIV_NUM_MAP = { 1:'4', 2:'8', 3:'t', 4:'16' };
 const DIV_MAP        = { '4':'4', '8':'8', '16':'16', 't':'t' };
@@ -1992,16 +2039,24 @@ function buildRampSteps() {
   const restDur  = isBarMode ? 999 : (parseInt($('m1RampRestDurBox')?.value) || 30) / 60;
   const steps = [];
   let cur = s;
+  let lastBpm = null;
   while (dir===1 ? cur<=e : cur>=e) {
     steps.push({ bpm:cur, dur, bars, isBarMode, label: cur+' BPM' });
     if (restOn) steps.push({ bpm:cur, dur:restDur, bars:restBars, isBarMode, isRest:true, restClick, label:'Rest' });
+    lastBpm = cur;
     cur += dir * sz;
+  }
+  // Ensure the target BPM is always reached, even if step size doesn't divide evenly
+  if (lastBpm !== e) {
+    steps.push({ bpm:e, dur, bars, isBarMode, label: e+' BPM' });
+    if (restOn) steps.push({ bpm:e, dur:restDur, bars:restBars, isBarMode, isRest:true, restClick, label:'Rest' });
   }
   return steps;
 }
 
 //  M1 Start 
 $('m1StartBtn').addEventListener('click', () => {
+  audio.getCtx().resume(); // anchor resume as close to the tap gesture as possible
   const countInOn  = $('m1CountIn')?.checked ?? false;
   const steps      = m1SpeedMode === 'ramp' ? buildRampSteps() : buildFixedSteps();
   const roundSteps  = steps.filter(s => !s.isRest);
@@ -2009,21 +2064,51 @@ $('m1StartBtn').addEventListener('click', () => {
 
   buildStepsList(steps, 'm1StepsList');
 
+  _inSilentRest = false;
+  _isUserPaused = false;
+
+  // Total programmed duration — null if any step is bar-mode (can't be computed in seconds)
+  const _sessionTotalSecs = steps.some(s => s.isBarMode)
+    ? null
+    : steps.reduce((sum, s) => sum + Math.round((s.dur ?? 0) * 60), 0);
+  const _totalEl = $('m1TotalTime');
+  if (_totalEl) _totalEl.textContent = '';
+
   session.onStepChange = (step, idx) => {
-    metro.bpm       = step.bpm;
-    metro.silentBar = step.isRest && !step.restClick;
-    // Update bar mode settings for new step
-    if (step.isBarMode) {
-      metro.barStepMode  = true;
-      metro.barStepSize  = step.bars ?? 4;
-      metro.barStepCount = 0;
-      metro._pendingAdvance = false;
-      _barsPlayed = 0;
-      const el = $('m1LiveTime');
-      if (el) el.textContent = `1/${metro.barStepSize} bars`;
+    const isSilentRest    = step.isRest && !step.restClick;
+    const wasInSilentRest = _inSilentRest;
+
+    if (isSilentRest && !step.isBarMode) {
+      // Fully stop the metronome — nothing keeps running in the background
+      _inSilentRest  = true;
+      metro.silentBar = true;
+      metro.pause();
     } else {
-      metro.barStepMode = false;
+      _inSilentRest   = false;
+      metro.bpm       = step.bpm;
+      metro.silentBar = isSilentRest; // true only for bar-mode silent rest
+
+      if (step.isBarMode) {
+        metro.barStepMode  = true;
+        metro.barStepSize  = step.bars ?? 4;
+        metro.barStepCount = 0;
+        metro._pendingAdvance = false;
+        _barsPlayed = 0;
+        const el = $('m1LiveTime');
+        if (el) el.textContent = `1/${metro.barStepSize} bars`;
+      } else {
+        metro.barStepMode = false;
+      }
+
+      if (wasInSilentRest) {
+        // Leaving a fully-stopped silent rest — restart cleanly from beat 1
+        metro.resume(false);
+      } else if (audio._master && audio._ctx) {
+        audio._master.gain.cancelScheduledValues(audio._ctx.currentTime);
+        audio._master.gain.setValueAtTime(isSilentRest ? 0 : 1, audio._ctx.currentTime);
+      }
     }
+
     $('m1LiveBpm').textContent = step.isRest ? 'Rest' : step.bpm;
     updateActiveStep('m1StepsList', idx);
     if (idx > 0) {
@@ -2052,6 +2137,17 @@ $('m1StartBtn').addEventListener('click', () => {
   session.onTick = s => {
     const el = $('m1LiveTime');
     if (el && !metro.barStepMode) el.textContent = formatTime(s);
+
+    if (_totalEl) {
+      if (_sessionTotalSecs == null) {
+        _totalEl.textContent = '';
+      } else {
+        const remainingFuture = steps.slice(session.current + 1)
+          .reduce((sum, st) => sum + Math.round((st.dur ?? 0) * 60), 0);
+        const elapsed = Math.max(0, _sessionTotalSecs - (s + remainingFuture));
+        _totalEl.textContent = formatTime(elapsed) + ' / ' + formatTime(_sessionTotalSecs);
+      }
+    }
   };
 
   const subDiv = phaseOn
@@ -2087,14 +2183,21 @@ $('m1StartBtn').addEventListener('click', () => {
 
 //  Pause / Resume 
 $('m1PauseBtn').addEventListener('click', () => {
-  if (!metro.running) {
+  if (_isUserPaused) {
+    _isUserPaused = false;
     const countInOn = $('m1CountIn')?.checked ?? false;
-    metro.resume(countInOn);
-    wireCountIn(countInOn, () => session.resumeStep());
-    if (!countInOn) session.resumeStep();
+    if (!_inSilentRest) {
+      metro.resume(countInOn);
+      wireCountIn(countInOn, () => session.resumeStep());
+      if (!countInOn) session.resumeStep();
+    } else {
+      // Still inside a silent rest — keep metro stopped, just resume the rest countdown
+      session.resumeStep();
+    }
     setPauseBtn(false);
   } else {
-    metro.pause();
+    _isUserPaused = true;
+    if (!_inSilentRest) metro.pause();
     session.stop();
     setPauseBtn(true);
   }
@@ -2398,6 +2501,8 @@ function m2HandleMouseEnter(e, r, c, btn) {
 
 function m2HandleClick(e, r, c, btn) {
   if (m2PasteMode) return; // handled by document capturing
+  // Block grid edits during active session
+  if ($('m2Session') && $('m2Session').style.display !== 'none') return;
   if (m2CopyMode) {
     m2IsDragging = false;
     if (m2DidDrag) { m2DidDrag = false; return; }
@@ -2646,10 +2751,17 @@ function buildM2RampSteps() {
   const restClick = $('m2RampRestClick')?.checked ?? false;
   const steps = [];
   let cur = s;
+  let lastBpm = null;
   while (dir===1 ? cur<=e : cur>=e) {
     steps.push({ bpm:cur, dur, bars, isBarMode, label: cur+' BPM' });
     if (restOn) steps.push({ bpm:cur, dur:restDur, bars:restBars, isBarMode, isRest:true, restClick, label:'Rest' });
+    lastBpm = cur;
     cur += dir * sz;
+  }
+  // Ensure the target BPM is always reached, even if step size doesn't divide evenly
+  if (lastBpm !== e) {
+    steps.push({ bpm:e, dur, bars, isBarMode, label: e+' BPM' });
+    if (restOn) steps.push({ bpm:e, dur:restDur, bars:restBars, isBarMode, isRest:true, restClick, label:'Rest' });
   }
   return steps;
 }
@@ -2679,6 +2791,7 @@ $('measuresPills')?.addEventListener('click', e => {
 });
 
 $('m2StartBtn')?.addEventListener('click', () => {
+  audio.getCtx().resume(); // anchor resume as close to the tap gesture as possible
   const countInOn = $('m2CountIn')?.checked ?? false;
   const steps = m2SpeedMode === 'ramp' ? buildM2RampSteps() : buildM2FixedSteps();
   const roundSteps  = steps.filter(s => !s.isRest);
@@ -2696,18 +2809,56 @@ $('m2StartBtn')?.addEventListener('click', () => {
   });
 
   // Session callbacks
+  _inSilentRest = false;
+  _isUserPaused = false;
+
+  // Total programmed duration — null if any step is bar-mode (can't be computed in seconds)
+  const _sessionTotalSecs = steps.some(s => s.isBarMode)
+    ? null
+    : steps.reduce((sum, s) => sum + Math.round((s.dur ?? 0) * 60), 0);
+  const _totalEl = $('m2TotalTime');
+  if (_totalEl) _totalEl.textContent = '';
+
   session.onStepChange = (step, idx) => {
-    metro.bpm       = step.bpm;
-    metro.silentBar = step.isRest && !step.restClick;
-    if (step.isBarMode) {
-      metro.barStepMode  = true;
-      metro.barStepSize  = step.bars ?? 4;
-      metro.barStepCount = 0;
-      metro._pendingAdvance = false;
-      _barsPlayed = 0;
+    const isSilentRest    = step.isRest && !step.restClick;
+    const wasInSilentRest = _inSilentRest;
+
+    if (isSilentRest && !step.isBarMode) {
+      // Fully stop the metronome — nothing keeps running in the background
+      _inSilentRest   = true;
+      metro.silentBar = true;
+      metro.pause();
     } else {
-      metro.barStepMode = false;
+      _inSilentRest   = false;
+      metro.bpm       = step.bpm;
+      metro.silentBar = isSilentRest; // true only for bar-mode silent rest
+
+      if (step.isBarMode) {
+        metro.barStepMode  = true;
+        metro.barStepSize  = step.bars ?? 4;
+        metro.barStepCount = 0;
+        metro._pendingAdvance = false;
+        _barsPlayed = 0;
+      } else {
+        metro.barStepMode = false;
+      }
+
+      if (wasInSilentRest) {
+        // Leaving a fully-stopped silent rest — restart cleanly from beat 1
+        m2._gridBeat = 0;
+        metro.resume(false);
+      } else {
+        if (!step.isRest && idx > 0) {
+          metro.beat   = 0;
+          m2._gridBeat = 0;
+        }
+        if (audio._master && audio._ctx) {
+          audio._master.gain.cancelScheduledValues(audio._ctx.currentTime);
+          audio._master.gain.setValueAtTime(isSilentRest ? 0 : 1, audio._ctx.currentTime);
+        }
+      }
     }
+
     $('m2LiveBpm').textContent = step.isRest ? 'Rest' : step.bpm;
     updateActiveStep('m2StepsList', idx);
     if (idx > 0) {
@@ -2722,6 +2873,7 @@ $('m2StartBtn')?.addEventListener('click', () => {
       }
     }
   };
+
 
   session.onComplete = () => {
     clearInterval(metro._timer); metro._timer = null;
@@ -2740,6 +2892,17 @@ $('m2StartBtn')?.addEventListener('click', () => {
   session.onTick = s => {
     const el = $('m2LiveTime');
     if (el) el.textContent = formatTime(s);
+
+    if (_totalEl) {
+      if (_sessionTotalSecs == null) {
+        _totalEl.textContent = '';
+      } else {
+        const remainingFuture = steps.slice(session.current + 1)
+          .reduce((sum, st) => sum + Math.round((st.dur ?? 0) * 60), 0);
+        const elapsed = Math.max(0, _sessionTotalSecs - (s + remainingFuture));
+        _totalEl.textContent = formatTime(elapsed) + ' / ' + formatTime(_sessionTotalSecs);
+      }
+    }
   };
 
   const m2FirstStep = steps[0];
@@ -2779,19 +2942,29 @@ $('m2StartBtn')?.addEventListener('click', () => {
 });
 
 $('m2PauseBtn')?.addEventListener('click', () => {
-  if (!metro.running) {
-    metro.resume();
-    if (audio._master && audio._ctx)
-      audio._master.gain.setValueAtTime(1, audio._ctx.currentTime);
+  if (_isUserPaused) {
+    _isUserPaused = false;
+    const countInOn = $('m2CountIn')?.checked ?? false;
+    if (!_inSilentRest) {
+      // Reset grid position to start of bar so audio and visual stay in sync
+      m2._gridBeat = 0;
+      metro.resume(countInOn);
+      if (audio._master && audio._ctx)
+        audio._master.gain.setValueAtTime(1, audio._ctx.currentTime);
+    }
+    if (!countInOn) session.resumeStep();
     setPauseBtn(false);
   } else {
-    metro.pause();
+    _isUserPaused = true;
+    if (!_inSilentRest) metro.pause();
+    session.stop();
     setPauseBtn(true);
   }
 });
 
 $('m2StopBtn')?.addEventListener('click', () => {
   metro.stop();
+  session.stop();
   $('m2Session').style.display = 'none';
   $('m2Setup').style.display   = '';
   _keepWake = false; WakeLock.release();
