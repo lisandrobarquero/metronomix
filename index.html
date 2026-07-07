@@ -357,7 +357,7 @@ input[type=range]::-moz-range-thumb { width: 26px; height: 26px; border-radius: 
           <span class="pill" data-ts="3">3/4</span>
           <span class="pill sel" data-ts="4">4/4</span>
           <span class="pill" data-ts="5">5/4</span>
-          <span class="pill" data-ts="6">6/4</span>
+          <span class="pill" data-ts="6">6/8</span>
           <span class="pill" data-ts="7">7/4</span>
         </div>
         <div class="divider"></div>
@@ -378,6 +378,8 @@ input[type=range]::-moz-range-thumb { width: 26px; height: 26px; border-radius: 
             <span class="pill" data-subdiv="2">8th</span>
             <span class="pill" data-subdiv="3">Triplet</span>
             <span class="pill" data-subdiv="4">16th</span>
+            <span class="pill" data-subdiv="5">16th triplet</span>
+            <span class="pill" data-subdiv="6">32nd</span>
           </div>
         </div>
         <div id="phaseOptions" style="display:none;">
@@ -1180,6 +1182,8 @@ const SUBDIVISIONS = {
   '8':  { count: 2 },
   't':  { count: 3 },
   '16': { count: 4 },
+  '16t':{ count: 6 },
+  '32': { count: 8 },
 };
 
 class M1Mode {
@@ -1767,7 +1771,7 @@ let _barsPlayed  = 0;
 let _inSilentRest = false; // true while in a no-click rest — metro fully stopped
 let _isUserPaused = false; // true while user has paused the session
 
-const SUBDIV_NUM_MAP = { 1:'4', 2:'8', 3:'t', 4:'16' };
+const SUBDIV_NUM_MAP = { 1:'4', 2:'8', 3:'t', 4:'16', 5:'16t', 6:'32' };
 const DIV_MAP        = { '4':'4', '8':'8', '16':'16', 't':'t' };
 
 function getTotalDurMins() {
@@ -2079,7 +2083,8 @@ $('m1StartBtn').addEventListener('click', () => {
     const wasInSilentRest = _inSilentRest;
 
     if (isSilentRest && !step.isBarMode) {
-      // Fully stop the metronome — nothing keeps running in the background
+      // Play chime BEFORE pausing — _osc routes through _master which pause() cuts to 0
+      if (idx > 0) { audio.chime([660, 440], 160); showToast('Rest', 'info'); }
       _inSilentRest  = true;
       metro.silentBar = true;
       metro.pause();
@@ -2111,7 +2116,7 @@ $('m1StartBtn').addEventListener('click', () => {
 
     $('m1LiveBpm').textContent = step.isRest ? 'Rest' : step.bpm;
     updateActiveStep('m1StepsList', idx);
-    if (idx > 0) {
+    if (idx > 0 && !isSilentRest) { // silent rest already notified before pause() above
       if (step.isRest) {
         audio.chime([660, 440], 160);
         showToast('Rest', 'info');
@@ -2824,7 +2829,8 @@ $('m2StartBtn')?.addEventListener('click', () => {
     const wasInSilentRest = _inSilentRest;
 
     if (isSilentRest && !step.isBarMode) {
-      // Fully stop the metronome — nothing keeps running in the background
+      // Play chime BEFORE pausing — _osc routes through _master which pause() cuts to 0
+      if (idx > 0) { audio.chime([660, 440], 160); showToast('Rest', 'info'); }
       _inSilentRest   = true;
       metro.silentBar = true;
       metro.pause();
@@ -2848,10 +2854,8 @@ $('m2StartBtn')?.addEventListener('click', () => {
         m2._gridBeat = 0;
         metro.resume(false);
       } else {
-        if (!step.isRest && idx > 0) {
-          metro.beat   = 0;
-          m2._gridBeat = 0;
-        }
+        // Normal step transition (new round, new ramp step) — do NOT reset beat/grid
+        // The pattern continues seamlessly across round boundaries
         if (audio._master && audio._ctx) {
           audio._master.gain.cancelScheduledValues(audio._ctx.currentTime);
           audio._master.gain.setValueAtTime(isSilentRest ? 0 : 1, audio._ctx.currentTime);
@@ -2861,7 +2865,7 @@ $('m2StartBtn')?.addEventListener('click', () => {
 
     $('m2LiveBpm').textContent = step.isRest ? 'Rest' : step.bpm;
     updateActiveStep('m2StepsList', idx);
-    if (idx > 0) {
+    if (idx > 0 && !isSilentRest) { // silent rest already notified before pause() above
       if (step.isRest) {
         audio.chime([660, 440], 160);
         showToast('Rest', 'info');
